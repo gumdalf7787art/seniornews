@@ -4,6 +4,7 @@ import { Bookmark, Share2, Volume2, Square } from 'lucide-react';
 import ArticleCard from '../components/ArticleCard';
 import NewsSidebar from '../components/NewsSidebar';
 import { articles, categoryName, getArticle } from '../data/articles';
+import { saveRecentArticle } from '../utils/readerPreferences';
 
 export default function ArticlePage({ user }) {
   const { slug } = useParams();
@@ -15,6 +16,7 @@ export default function ArticlePage({ user }) {
 
   useEffect(() => {
     if (!article) return;
+    saveRecentArticle(article);
     document.title = `${article.title} | 시니어 라이프 뉴스`;
     const description = document.querySelector('meta[name="description"]');
     if (description) description.setAttribute('content', article.summary);

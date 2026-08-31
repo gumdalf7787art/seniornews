@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Search, UserRound, Contrast, ZoomIn } from 'lucide-react';
 import { categories } from '../data/articles';
+import { getReaderSettings, saveReaderSettings, SETTINGS_EVENT } from '../utils/readerPreferences';
 
 function readSetting(key) {
   try { return window.localStorage.getItem(key) === 'true'; }
@@ -16,8 +17,8 @@ function saveSetting(key, value) {
 export default function NewsLayout({ user }) {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
-  const [largeText, setLargeText] = useState(() => readSetting('largeText'));
-  const [highContrast, setHighContrast] = useState(() => readSetting('highContrast'));
+  const [largeText, setLargeText] = useState(() => getReaderSettings().largeText);
+  const [highContrast, setHighContrast] = useState(() => getReaderSettings().highContrast);
 
   useEffect(() => {
     document.body.classList.toggle('large-text', largeText);
@@ -28,6 +29,25 @@ export default function NewsLayout({ user }) {
     document.body.classList.toggle('high-contrast', highContrast);
     saveSetting('highContrast', highContrast);
   }, [highContrast]);
+
+  useEffect(() => {
+    const syncSettings = (event) => {
+      setLargeText(event.detail?.largeText ?? readSetting('largeText'));
+      setHighContrast(event.detail?.highContrast ?? readSetting('highContrast'));
+    };
+    window.addEventListener(SETTINGS_EVENT, syncSettings);
+    return () => window.removeEventListener(SETTINGS_EVENT, syncSettings);
+  }, []);
+
+  const toggleLargeText = () => {
+    const next = !largeText;
+    saveReaderSettings({ largeText: next, highContrast });
+  };
+
+  const toggleHighContrast = () => {
+    const next = !highContrast;
+    saveReaderSettings({ largeText, highContrast: next });
+  };
 
   const search = (event) => {
     event.preventDefault();
@@ -41,8 +61,8 @@ export default function NewsLayout({ user }) {
         <div className="utility-inner">
           <span>시니어의 오늘을 더 정확하고 쉽게 전합니다.</span>
           <div className="utility-actions" aria-label="화면 보기 설정">
-            <button type="button" onClick={() => setLargeText((value) => !value)} aria-pressed={largeText} title="글자 크기 전환"><ZoomIn size={17} /> 가+</button>
-            <button type="button" onClick={() => setHighContrast((value) => !value)} aria-pressed={highContrast} title="고대비 화면 전환"><Contrast size={17} /></button>
+            <button type="button" onClick={toggleLargeText} aria-pressed={largeText} title="글자 크기 전환"><ZoomIn size={17} /> 가+</button>
+            <button type="button" onClick={toggleHighContrast} aria-pressed={highContrast} title="고대비 화면 전환"><Contrast size={17} /></button>
           </div>
         </div>
       </div>
