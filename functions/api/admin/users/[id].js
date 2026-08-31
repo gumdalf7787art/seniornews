@@ -1,4 +1,4 @@
-import { audit, json, requireUser, verifyMutationRequest } from '../../../utils/auth.js';
+import { audit, json, requireUser, verifyMutationRequest } from '../../utils/auth.js';
 
 const roles = ['reader', 'editor', 'admin'];
 const statuses = ['active', 'suspended'];

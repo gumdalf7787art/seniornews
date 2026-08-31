@@ -1,4 +1,4 @@
-import { audit, json, requireUser, verifyMutationRequest } from '../../../utils/auth.js';
+import { audit, json, requireUser, verifyMutationRequest } from '../../utils/auth.js';
 
 export async function onRequestPatch(context) {
   if (!verifyMutationRequest(context.request)) return json({ message: '잘못된 요청입니다.' }, 403);
