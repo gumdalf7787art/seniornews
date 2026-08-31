@@ -241,6 +241,14 @@ main { flex: 1; }
 .upload-label { cursor: pointer; }
 .upload-row span { color: var(--muted); font-size: 14px; }
 .editor-image-preview { width: min(360px, 100%); max-height: 220px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); }
+.image-upload-status { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: -5px 0 16px; padding: 10px 12px; border-radius: 6px; font-size: 14px; }
+.image-upload-status.is-ready { background: #edf7ef; color: var(--green-900); }
+.image-upload-status.is-error { background: #fff0ee; color: #a83b30; }
+.image-upload-status span { color: inherit; opacity: .8; }
+.representative-image-preview { margin: 4px 0 0; }
+.representative-image-preview img { display: block; width: min(520px, 100%); max-height: 340px; }
+.representative-image-preview figcaption { margin-top: 7px; color: var(--muted); font-size: 14px; }
+.image-preview-empty { display: grid; place-items: center; min-height: 150px; padding: 20px; border: 1px dashed #aebbb1; border-radius: 6px; background: #f8faf8; color: var(--muted); text-align: center; }
 .article-body-input { min-height: 360px !important; line-height: 1.8; }
 .block-editor { border: 1px solid var(--line); background: #fafbf9; }
 .block-editor-toolbar { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; border-bottom: 1px solid var(--line); background: #f2f6f2; }
