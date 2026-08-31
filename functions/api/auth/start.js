@@ -3,7 +3,12 @@ import { json } from '../utils/auth.js';
 export async function onRequestGet(context) {
   const url = new URL(context.request.url); const provider = url.searchParams.get('provider'); const state = crypto.randomUUID(); const origin = url.origin;
   const configs = {
-    kakao: { clientId: context.env.KAKAO_CLIENT_ID, redirect: `${origin}/auth/kakao/callback`, auth: 'https://kauth.kakao.com/oauth/authorize', params: { response_type: 'code' } },
+    kakao: {
+      clientId: context.env.KAKAO_CLIENT_ID,
+      redirect: `${origin}/auth/kakao/callback`,
+      auth: 'https://kauth.kakao.com/oauth/authorize',
+      params: { response_type: 'code', scope: 'profile_nickname profile_image account_email' },
+    },
     naver: { clientId: context.env.NAVER_CLIENT_ID, redirect: `${origin}/auth/naver/callback`, auth: 'https://nid.naver.com/oauth2.0/authorize', params: { response_type: 'code' } },
     google: { clientId: context.env.GOOGLE_CLIENT_ID, redirect: `${origin}/auth/google/callback`, auth: 'https://accounts.google.com/o/oauth2/v2/auth', params: { response_type: 'code', scope: 'email profile' } },
   };
