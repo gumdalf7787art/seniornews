@@ -92,8 +92,8 @@ export default function AdminPage({ user }) {
       setMessage('본문 이미지를 사용하려면 각 이미지의 설명을 입력해 주세요.');
       return;
     }
-    setSaving(true);
     if (status === 'published' && !window.confirm(editingId ? '수정한 내용을 반영하고 지금 바로 발행할까요?' : '이 기사를 지금 바로 발행할까요?')) return;
+    setSaving(true);
     setMessage(status === 'review' ? '발행을 요청하는 중입니다.' : status === 'published' ? '기사를 발행하는 중입니다.' : '기사를 저장하는 중입니다.');
     try {
       const response = await fetch(editingId ? `/api/admin/articles/${editingId}` : '/api/admin/articles', {
