@@ -37,7 +37,7 @@ Node.js version: 22.16.0
 SKIP_DEPENDENCY_INSTALL: 1
 ```
 
-Cloudflare의 자동 `npm ci` 단계에서 문제가 생기면 `SKIP_DEPENDENCY_INSTALL=1`로 자동 설치를 끄고, `npm run cf:build`에서 `npm install`과 `vite build`를 함께 실행합니다.
+Cloudflare의 자동 `npm ci` 단계에서 문제가 생겨 `package-lock.json`은 저장소에서 제외했다. 배포 시에는 `npm run cf:build`에서 `npm install`과 `vite build`를 함께 실행한다.
 
 2. `wrangler.toml`의 `database_id`를 새 D1 ID로 교체합니다.
 3. 새 R2 버킷 이름과 공개 미디어 도메인을 설정합니다.
