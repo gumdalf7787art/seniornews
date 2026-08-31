@@ -39,8 +39,8 @@ SKIP_DEPENDENCY_INSTALL: 1
 
 Cloudflare는 `package-lock.json`이 있으면 자동 설치 단계에서 `npm ci`를 사용한다. `package.json`을 바꾼 뒤에는 `npm install --package-lock-only`로 lockfile을 함께 갱신한다.
 
-2. `wrangler.toml`의 `database_id`를 새 D1 ID로 교체합니다.
-3. 새 R2 버킷 이름과 공개 미디어 도메인을 설정합니다.
+2. D1을 만든 뒤 `wrangler.toml`에 주석으로 보관된 D1 바인딩을 실제 ID로 추가합니다.
+3. R2를 만든 뒤 `wrangler.toml`에 R2 바인딩과 공개 미디어 도메인을 설정합니다.
 4. D1에 `schema.sql`을 적용합니다.
 5. 다음 Secret/환경변수를 Cloudflare에 설정합니다.
 

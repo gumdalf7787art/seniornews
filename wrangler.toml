@@ -2,17 +2,19 @@ name = "senior-news"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-08-31"
 
-# 새 Cloudflare 프로젝트 생성 후 실제 식별자로 교체하세요.
-[[d1_databases]]
-binding = "DB"
-database_name = "senior-news-db"
-database_id = "REPLACE_WITH_NEW_D1_DATABASE_ID"
-
-[[r2_buckets]]
-binding = "BUCKET"
-bucket_name = "senior-news-media"
-
-# 필요한 비밀값은 파일에 기록하지 말고 Cloudflare 환경변수/Secret으로 설정합니다.
+# D1 and R2 bindings are intentionally omitted until the real resources are
+# created. Add the following sections after receiving the production IDs:
+#
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "senior-news-db"
+# database_id = "REAL_D1_DATABASE_UUID"
+#
+# [[r2_buckets]]
+# binding = "BUCKET"
+# bucket_name = "REAL_R2_BUCKET_NAME"
+#
+# Configure sensitive values as Cloudflare environment variables or secrets:
 # JWT_SECRET, RESEND_API_KEY, PUBLIC_MEDIA_URL
 # KAKAO_CLIENT_ID, KAKAO_CLIENT_SECRET
 # NAVER_CLIENT_ID, NAVER_CLIENT_SECRET

@@ -136,4 +136,4 @@ SKIP_DEPENDENCY_INSTALL = 1
 - 내부 요청 헤더 `X-Requested-With: SeniorNews`는 기능 식별자이므로 서비스명 변경과 별개로 유지한다.
 - `package.json`의 패키지명 `senior-news`와 Cloudflare 리소스명은 내부 식별자이므로 실제 필요가 생길 때만 변경한다.
 - 현재 기사 데이터는 `src/data/articles.js`의 샘플 데이터다. 운영 데이터는 D1 CMS 구조로 이전해야 한다.
-- `wrangler.toml`의 `database_id`는 아직 `REPLACE_WITH_NEW_D1_DATABASE_ID` 상태다.
+- 실제 D1·R2가 준비되기 전 배포가 실패하지 않도록 `wrangler.toml`의 바인딩은 주석 예시로 보관되어 있다.

@@ -2,7 +2,7 @@ function escapeHtml(value=''){return String(value).replace(/[&<>'"]/g,(char)=>({
 function replaceMeta(html,name,value,property=false){const attribute=property?'property':'name';const expression=new RegExp(`<meta\\s+${attribute}=["']${name}["'][^>]*>`,'i');const tag=`<meta ${attribute}="${name}" content="${escapeHtml(value)}">`;return expression.test(html)?html.replace(expression,tag):html.replace('</head>',`${tag}</head>`);}
 
 export async function onRequest(context){
-  const url=new URL(context.request.url); const match=url.pathname.match(/^\/article\/([^/]+)$/); if(!match)return context.next();
+  const url=new URL(context.request.url); const match=url.pathname.match(/^\/article\/([^/]+)$/); if(!match||!context.env.DB)return context.next();
   const article=await context.env.DB.prepare("SELECT a.title,a.summary,a.body_text,a.image_url,a.image_alt,a.published_at,a.updated_at,a.source_text,c.name category_name,u.name author_name FROM articles a JOIN categories c ON c.id=a.category_id JOIN users u ON u.id=a.author_id WHERE a.slug=? AND a.status='published' AND a.published_at<=CURRENT_TIMESTAMP").bind(decodeURIComponent(match[1])).first();
   if(!article)return context.next();
   const asset=await context.next(); if(!asset.headers.get('Content-Type')?.includes('text/html'))return asset;
