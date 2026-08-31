@@ -7,13 +7,14 @@ export async function onRequestPost(context) {
   const form = await context.request.formData();
   const file = form.get('file');
   const alt = String(form.get('alt') || '').trim();
-  if (!file || typeof file.stream !== 'function' || !alt) return json({ message: '이미지 파일을 다시 선택해 주세요.' }, 400);
+  if (!file || typeof file.arrayBuffer !== 'function' || !alt) return json({ message: '이미지 파일을 다시 선택해 주세요.' }, 400);
   if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) return json({ message: 'JPG, PNG, WEBP 이미지만 5MB까지 올릴 수 있습니다.' }, 400);
   if (!context.env.BUCKET || !context.env.PUBLIC_MEDIA_URL) return json({ message: '이미지 저장소 설정을 확인해 주세요.' }, 503);
   const extension = String(file.name || 'image').split('.').pop().toLowerCase();
   const key = `articles/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${extension}`;
   try {
-    await context.env.BUCKET.put(key, file.stream(), { httpMetadata: { contentType: file.type } });
+    const bytes = await file.arrayBuffer();
+    await context.env.BUCKET.put(key, bytes, { httpMetadata: { contentType: file.type } });
     const base = context.env.PUBLIC_MEDIA_URL.replace(/\/$/, '');
     const url = `${base}/${key}`;
     const result = await context.env.DB.prepare('INSERT INTO media(uploader_id,object_key,url,alt_text,mime_type,size_bytes) VALUES(?,?,?,?,?,?)').bind(auth.user.id, key, url, alt, file.type, file.size).run();

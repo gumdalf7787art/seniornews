@@ -21,6 +21,7 @@ export default function AdminPage({ user }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [pendingImage, setPendingImage] = useState(null);
   const [uploadingBlockId, setUploadingBlockId] = useState(null);
 
   const isCreator = user.role === 'admin';
@@ -60,18 +61,22 @@ export default function AdminPage({ user }) {
   };
 
   const openNewArticle = () => {
+    if (form.image_url?.startsWith('blob:')) URL.revokeObjectURL(form.image_url);
     setForm(emptyForm);
+    setPendingImage(null);
     setEditingId(null);
     setMessage('');
     setView('editor');
   };
 
   const openEditor = (article) => {
+    if (form.image_url?.startsWith('blob:')) URL.revokeObjectURL(form.image_url);
     setForm({
       title: article.title || '', slug: article.slug || '', summary: article.summary || '', category: article.category_slug || 'health',
       blocks: blocksFromArticle(article), image_url: article.image_url || '', image_alt: article.image_alt || '', source_text: article.source_text || '',
     });
     setEditingId(article.id);
+    setPendingImage(null);
     setMessage('');
     setView('editor');
   };
@@ -100,6 +105,17 @@ export default function AdminPage({ user }) {
     setSaving(true);
     setMessage(status === 'review' ? '발행을 요청하는 중입니다.' : status === 'published' ? '기사를 발행하는 중입니다.' : '기사를 저장하는 중입니다.');
     try {
+      if (pendingImage) {
+        setUploading(true);
+        setMessage('대표 이미지를 저장소에 올리는 중입니다. 잠시만 기다려 주세요.');
+        const imageData = new FormData();
+        imageData.append('file', pendingImage);
+        imageData.append('alt', form.image_alt.trim());
+        const imageResponse = await fetch('/api/admin/media', { method: 'POST', credentials: 'include', headers: { 'X-Requested-With': 'SeniorNews' }, body: imageData });
+        const imageResult = await imageResponse.json().catch(() => ({ message: '이미지 서버 응답을 확인하지 못했습니다.' }));
+        if (!imageResponse.ok || !imageResult.url) throw new Error(imageResult.message || '이미지를 저장하지 못했습니다.');
+        payload.image_url = imageResult.url;
+      }
       const response = await fetch(editingId ? `/api/admin/articles/${editingId}` : '/api/admin/articles', {
         method: editingId ? 'PATCH' : 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'SeniorNews' }, body: JSON.stringify(payload),
@@ -109,12 +125,15 @@ export default function AdminPage({ user }) {
       setMessage(status === 'review' ? '발행 요청을 보냈습니다. 제작자가 바로 발행하거나 수정 후 발행할 수 있습니다.' : status === 'published' ? '기사를 바로 발행했습니다.' : '기사를 임시 저장했습니다.');
       await loadArticles();
       setView('dashboard');
+      if (form.image_url?.startsWith('blob:')) URL.revokeObjectURL(form.image_url);
       setForm(emptyForm);
+      setPendingImage(null);
       setEditingId(null);
     } catch (error) {
       setMessage(error.message || '기사를 저장하지 못했습니다.');
     } finally {
       setSaving(false);
+      setUploading(false);
     }
   };
 
@@ -131,32 +150,25 @@ export default function AdminPage({ user }) {
     }
   };
 
-  const uploadImage = async (event) => {
+  const uploadImage = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    const previousUrl = form.image_url;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setMessage('JPG, PNG, WEBP 이미지 파일만 첨부할 수 있습니다.');
+      event.target.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage('이미지 용량은 5MB 이하로 줄여서 첨부해 주세요.');
+      event.target.value = '';
+      return;
+    }
+    if (form.image_url?.startsWith('blob:')) URL.revokeObjectURL(form.image_url);
     const previewUrl = URL.createObjectURL(file);
     setForm((current) => ({ ...current, image_url: previewUrl }));
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('alt', form.image_alt.trim() || '대표 이미지 설명 미입력');
-    setUploading(true);
-    setMessage(`“${file.name}” 이미지를 업로드하는 중입니다.`);
-    try {
-      const response = await fetch('/api/admin/media', { method: 'POST', credentials: 'include', headers: { 'X-Requested-With': 'SeniorNews' }, body: formData });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message);
-      URL.revokeObjectURL(previewUrl);
-      setForm((current) => ({ ...current, image_url: data.url }));
-      setMessage('대표 이미지 첨부가 완료되었습니다. 아래에 보이는 썸네일을 확인한 뒤 이미지 설명을 입력하고 저장해 주세요.');
-    } catch (error) {
-      URL.revokeObjectURL(previewUrl);
-      setForm((current) => ({ ...current, image_url: previousUrl }));
-      setMessage(error.message || '이미지를 올리지 못했습니다.');
-    } finally {
-      setUploading(false);
-      event.target.value = '';
-    }
+    setPendingImage(file);
+    setMessage(`“${file.name}” 이미지가 첨부되었습니다. 썸네일을 확인하고 저장 또는 발행 요청을 눌러 주세요.`);
+    event.target.value = '';
   };
 
   const uploadInlineImage = async (block, event) => {
