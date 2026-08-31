@@ -1,5 +1,3 @@
-import { scrypt as nodeScrypt } from 'node:crypto';
-
 const encoder = new TextEncoder();
 const SCRYPT_N = 16384;
 const SCRYPT_R = 8;
@@ -16,12 +14,12 @@ function constantTimeEqual(actual, expected) {
 }
 
 function deriveScrypt(password, salt, options = {}) {
-  return new Promise((resolve, reject) => {
+  return import('node:crypto').then(({ scrypt: nodeScrypt }) => new Promise((resolve, reject) => {
     nodeScrypt(password, salt, KEY_LENGTH, { maxmem: 64 * 1024 * 1024, ...options }, (error, derivedKey) => {
       if (error) reject(error);
       else resolve(new Uint8Array(derivedKey));
     });
-  });
+  }));
 }
 
 export async function hashPassword(password) {
