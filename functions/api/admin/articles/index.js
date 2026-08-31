@@ -26,6 +26,12 @@ export async function onRequestPost(context) {
   if (!data.title?.trim() || !/^[a-z0-9-]{3,}$/.test(data.slug || '') || !data.summary?.trim() || !data.body_text?.trim()) return json({ message: '제목, 영문 주소, 요약, 본문을 확인해 주세요.' }, 400);
   const imageError = validateImages(data); if (imageError) return json({ message: imageError }, 400);
   const category = await context.env.DB.prepare('SELECT id FROM categories WHERE slug=? AND is_active=1').bind(data.category).first(); if (!category) return json({ message: '카테고리를 확인해 주세요.' }, 400);
-  const status = data.status === 'review' ? 'review' : 'draft';
-  try { const result = await context.env.DB.prepare('INSERT INTO articles(category_id,author_id,title,slug,summary,body_json,body_text,image_url,image_alt,source_text,status) VALUES(?,?,?,?,?,?,?,?,?,?,?)').bind(category.id,auth.user.id,data.title.trim(),data.slug,data.summary.trim(),data.body_json || '{}',data.body_text.trim(),data.image_url || null,data.image_alt || null,data.source_text || null,status).run(); await audit(context.env,auth.user.id,status === 'review' ? 'submit_review' : 'create','article',result.meta.last_row_id,{ title:data.title }); return json({ success:true,id:result.meta.last_row_id,status },201); } catch(error) { return json({ message:String(error.message).includes('UNIQUE')?'이미 사용 중인 기사 주소입니다.':'기사를 저장하지 못했습니다.' },String(error.message).includes('UNIQUE')?409:500); }
+  const status = ['review', 'published'].includes(data.status) ? data.status : 'draft';
+  const action = status === 'review' ? 'request_publication' : status === 'published' ? 'direct_publish' : 'create';
+  try {
+    const result = await context.env.DB.prepare("INSERT INTO articles(category_id,author_id,editor_id,title,slug,summary,body_json,body_text,image_url,image_alt,source_text,status,published_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,CASE WHEN ?='published' THEN CURRENT_TIMESTAMP ELSE NULL END)")
+      .bind(category.id, auth.user.id, status === 'published' ? auth.user.id : null, data.title.trim(), data.slug, data.summary.trim(), data.body_json || '{}', data.body_text.trim(), data.image_url || null, data.image_alt || null, data.source_text || null, status, status).run();
+    await audit(context.env, auth.user.id, action, 'article', result.meta.last_row_id, { title: data.title });
+    return json({ success: true, id: result.meta.last_row_id, status }, 201);
+  } catch(error) { return json({ message:String(error.message).includes('UNIQUE')?'이미 사용 중인 기사 주소입니다.':'기사를 저장하지 못했습니다.' },String(error.message).includes('UNIQUE')?409:500); }
 }

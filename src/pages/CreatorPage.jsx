@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { BookOpenCheck, CheckCircle2, FolderCog, LayoutDashboard, Plus, RefreshCw, Send, ShieldCheck, UsersRound } from 'lucide-react';
 
 const statusLabels = { active: '활성', suspended: '이용 정지', withdrawn: '탈퇴' };
-const articleStatusLabels = { draft: '작성 중', review: '검수 요청', scheduled: '예약 발행', published: '공개 중', archived: '보관됨' };
+const articleStatusLabels = { draft: '작성 중', review: '발행 요청', scheduled: '예약 발행', published: '공개 중', archived: '보관됨' };
 
 function readCount(rows, key) {
   return Number(rows.find((row) => row.status === key || row.role === key)?.count || 0);
@@ -111,7 +111,7 @@ export default function CreatorPage({ user }) {
 
   const navItems = [
     { id: 'overview', label: '운영 현황', icon: LayoutDashboard },
-    { id: 'review', label: '발행 검수', icon: CheckCircle2 },
+    { id: 'review', label: '발행 요청', icon: CheckCircle2 },
     { id: 'members', label: '회원·권한', icon: UsersRound },
     { id: 'categories', label: '카테고리', icon: FolderCog },
   ];
