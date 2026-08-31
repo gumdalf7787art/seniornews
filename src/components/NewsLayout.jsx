@@ -48,8 +48,8 @@ export default function NewsLayout({ user }) {
       </div>
       <header className="site-header">
         <div className="header-inner">
-          <Link className="brand" to="/" aria-label="시니어 뉴스 홈">
-            <span className="brand-mark" aria-hidden="true">시</span><strong>시니어 뉴스</strong>
+          <Link className="brand" to="/" aria-label="시니어 라이프 뉴스 홈">
+            <span className="brand-mark" aria-hidden="true">시</span><strong>시니어 라이프 뉴스</strong>
           </Link>
           <form className="header-search" role="search" onSubmit={search}>
             <label className="sr-only" htmlFor="site-search">뉴스 검색</label>
@@ -71,7 +71,7 @@ export default function NewsLayout({ user }) {
           <div>
             <div className="brand">
               <span className="brand-mark">시</span>
-              <strong style={{ color: 'white' }}>시니어 뉴스</strong>
+              <strong style={{ color: 'white' }}>시니어 라이프 뉴스</strong>
             </div>
             <p className="footer-note">시니어의 삶에 필요한 뉴스를 정확하고 이해하기 쉽게 전하겠습니다.</p>
           </div>

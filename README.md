@@ -1,4 +1,4 @@
-# 시니어 뉴스
+# 시니어 라이프 뉴스
 
 50~70대 독자를 위한 편집형 온라인 뉴스 MVP입니다. React/Vite 프런트엔드와 Cloudflare Pages Functions, D1, R2를 사용합니다.
 
@@ -26,10 +26,22 @@ Vite 개발 서버에서는 샘플 기사로 공개 화면을 확인할 수 있�
 
 ## 새 Cloudflare 프로젝트 연결
 
-1. `wrangler.toml`의 `database_id`를 새 D1 ID로 교체합니다.
-2. 새 R2 버킷 이름과 공개 미디어 도메인을 설정합니다.
-3. D1에 `schema.sql`을 적용합니다.
-4. 다음 Secret/환경변수를 Cloudflare에 설정합니다.
+1. Cloudflare Pages 빌드 설정을 아래처럼 맞춥니다.
+
+```text
+Framework preset: Vite
+Build command: npm run build
+Build output directory: dist
+Root directory: /
+Node.js version: 22.16.0
+```
+
+Cloudflare가 의존성 설치는 자동으로 처리하므로 Build command에 `npm ci`, `npm install`을 함께 넣지 않습니다.
+
+2. `wrangler.toml`의 `database_id`를 새 D1 ID로 교체합니다.
+3. 새 R2 버킷 이름과 공개 미디어 도메인을 설정합니다.
+4. D1에 `schema.sql`을 적용합니다.
+5. 다음 Secret/환경변수를 Cloudflare에 설정합니다.
 
 ```text
 JWT_SECRET
@@ -44,7 +56,7 @@ GOOGLE_CLIENT_ID
 GOOGLE_CLIENT_SECRET
 ```
 
-5. 최초 관리자는 D1의 `users.role`을 `admin`으로 변경합니다. 이후 권한 관리는 관리자 기능으로 확장할 수 있습니다.
+6. 최초 관리자는 D1의 `users.role`을 `admin`으로 변경합니다. 이후 권한 관리는 관리자 기능으로 확장할 수 있습니다.
 
 ## 배포 전 교체 항목
 

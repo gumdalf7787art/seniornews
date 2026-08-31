@@ -15,10 +15,10 @@ export default function ArticlePage({ user }) {
 
   useEffect(() => {
     if (!article) return;
-    document.title = `${article.title} | 시니어 뉴스`;
+    document.title = `${article.title} | 시니어 라이프 뉴스`;
     const description = document.querySelector('meta[name="description"]');
     if (description) description.setAttribute('content', article.summary);
-    return () => { document.title = '시니어 뉴스 | 오늘을 더 정확하고 쉽게'; };
+    return () => { document.title = '시니어 라이프 뉴스 | 오늘을 더 정확하고 쉽게'; };
   }, [article]);
 
   useEffect(() => {
