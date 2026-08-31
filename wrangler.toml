@@ -2,20 +2,20 @@ name = "senior-news"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-08-31"
 
-# D1 and R2 bindings are intentionally omitted until the real resources are
-# created. Add the following sections after receiving the production IDs:
-#
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "senior-news-db"
-# database_id = "REAL_D1_DATABASE_UUID"
-#
-# [[r2_buckets]]
-# binding = "BUCKET"
-# bucket_name = "REAL_R2_BUCKET_NAME"
-#
+[[d1_databases]]
+binding = "DB"
+database_name = "senior-db"
+database_id = "c6b7dcea-bb0a-4f18-8a67-b9579b86b2f5"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "senior-r2"
+
+[vars]
+PUBLIC_MEDIA_URL = "https://pub-d47865c644f54ee7b9101675b52db9bd.r2.dev"
+
 # Configure sensitive values as Cloudflare environment variables or secrets:
-# JWT_SECRET, RESEND_API_KEY, PUBLIC_MEDIA_URL
+# JWT_SECRET, RESEND_API_KEY
 # KAKAO_CLIENT_ID, KAKAO_CLIENT_SECRET
 # NAVER_CLIENT_ID, NAVER_CLIENT_SECRET
 # GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
