@@ -1,0 +1,2 @@
+import { json, requireUser } from '../utils/auth.js';
+export async function onRequestGet(context) { const auth = await requireUser(context); if (auth.error) return auth.error; const result = await context.env.DB.prepare('SELECT b.article_id,b.created_at,a.slug,a.title,a.summary,a.image_url,a.image_alt FROM bookmarks b JOIN articles a ON a.id=b.article_id WHERE b.user_id=? AND a.status=? ORDER BY b.created_at DESC').bind(auth.user.id, 'published').all(); return json({ bookmarks: result.results }); }

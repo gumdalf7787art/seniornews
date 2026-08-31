@@ -1,73 +1,19 @@
 import { signJWT } from './utils/jwt.js';
+import { verifyPassword } from './utils/password.js';
+import { json, verifyMutationRequest } from './utils/auth.js';
+
+async function digest(value) { const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)); return Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, '0')).join(''); }
 
 export async function onRequestPost(context) {
-  const { request, env } = context;
-
-  try {
-    const data = await request.json();
-    const { email, password } = data;
-
-    if (!email || !password) {
-      return new Response(JSON.stringify({ success: false, message: "이메일과 비밀번호는 필수입니다." }), { 
-        status: 400,
-        headers: { "Content-Type": "application/json" }
-      });
-    }
-
-    // 비밀번호 해싱 (signup.js와 동일한 방식)
-    const encoder = new TextEncoder();
-    const dataBuffer = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-    // D1 데이터베이스에서 유저 조회
-    const result = await env.DB.prepare(
-      `SELECT * FROM Users WHERE email = ? AND password_hash = ?`
-    ).bind(email, passwordHash).first();
-
-    if (!result) {
-      return new Response(JSON.stringify({ 
-        success: false, 
-        message: "이메일 또는 비밀번호가 올바르지 않습니다." 
-      }), { 
-        status: 401,
-        headers: { "Content-Type": "application/json" }
-      });
-    }
-
-
-    const userProfile = {
-      name: result.name,
-      email: result.email,
-      title: '대표', // 일단 데모용으로 기본값 제공
-      company: '(소속 정보 없음)',
-      phone: '(연락처 정보 없음)',
-      role: result.role || 'user'
-    };
-
-    const token = await signJWT({ email: result.email, role: result.role || 'user' }, env.JWT_SECRET);
-
-    return new Response(JSON.stringify({ 
-      success: true, 
-      message: "로그인 성공",
-      user: userProfile
-    }), {
-      status: 200,
-      headers: { 
-        "Content-Type": "application/json",
-        "Set-Cookie": `token=${token}; HttpOnly; Secure; Path=/; SameSite=Strict; Max-Age=86400`
-      }
-    });
-
-  } catch (error) {
-    return new Response(JSON.stringify({ 
-      success: false, 
-      message: "서버 오류가 발생했습니다.",
-      error: error.message
-    }), { 
-      status: 500,
-      headers: { "Content-Type": "application/json" }
-    });
-  }
+  if (!verifyMutationRequest(context.request)) return json({ success: false, message: '잘못된 요청입니다.' }, 403);
+  const { email, password } = await context.request.json(); const normalizedEmail = String(email || '').trim().toLowerCase();
+  const ipHash = await digest(context.request.headers.get('CF-Connecting-IP') || 'local');
+  const recent = await context.env.DB.prepare("SELECT COUNT(*) count FROM login_attempts WHERE email=? AND succeeded=0 AND attempted_at > datetime('now','-15 minutes')").bind(normalizedEmail).first();
+  if (recent.count >= 5) return json({ success: false, message: '로그인 시도가 많습니다. 15분 뒤 다시 시도해 주세요.' }, 429);
+  const user = await context.env.DB.prepare('SELECT * FROM users WHERE email=? AND status=?').bind(normalizedEmail, 'active').first();
+  const valid = user && await verifyPassword(password || '', user.password_hash);
+  await context.env.DB.prepare('INSERT INTO login_attempts(email,ip_hash,succeeded) VALUES(?,?,?)').bind(normalizedEmail, ipHash, valid ? 1 : 0).run();
+  if (!valid) return json({ success: false, message: '이메일 또는 비밀번호를 확인해 주세요.' }, 401);
+  const token = await signJWT({ sub: user.id, email: user.email, role: user.role }, context.env.JWT_SECRET);
+  return json({ success: true, user: { id: user.id, email: user.email, name: user.name, role: user.role } }, 200, { 'Set-Cookie': `token=${token}; HttpOnly; Secure; Path=/; SameSite=Strict; Max-Age=86400` });
 }

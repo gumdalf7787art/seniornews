@@ -1,0 +1,4 @@
+import { json, requireUser, verifyMutationRequest } from '../utils/auth.js';
+async function change(context, remove) { if (!verifyMutationRequest(context.request)) return json({ message: '잘못된 요청입니다.' }, 403); const auth = await requireUser(context); if (auth.error) return auth.error; const articleId = Number(context.params.articleId); if (!Number.isInteger(articleId)) return json({ message: '잘못된 기사 번호입니다.' }, 400); if (remove) await context.env.DB.prepare('DELETE FROM bookmarks WHERE user_id=? AND article_id=?').bind(auth.user.id, articleId).run(); else await context.env.DB.prepare('INSERT OR IGNORE INTO bookmarks(user_id,article_id) SELECT ?,id FROM articles WHERE id=? AND status=?').bind(auth.user.id, articleId, 'published').run(); return json({ success: true }); }
+export const onRequestPost = (context) => change(context, false);
+export const onRequestDelete = (context) => change(context, true);

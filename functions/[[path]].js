@@ -1,0 +1,16 @@
+function escapeHtml(value=''){return String(value).replace(/[&<>'"]/g,(char)=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));}
+function replaceMeta(html,name,value,property=false){const attribute=property?'property':'name';const expression=new RegExp(`<meta\\s+${attribute}=["']${name}["'][^>]*>`,'i');const tag=`<meta ${attribute}="${name}" content="${escapeHtml(value)}">`;return expression.test(html)?html.replace(expression,tag):html.replace('</head>',`${tag}</head>`);}
+
+export async function onRequest(context){
+  const url=new URL(context.request.url); const match=url.pathname.match(/^\/article\/([^/]+)$/); if(!match)return context.next();
+  const article=await context.env.DB.prepare("SELECT a.title,a.summary,a.body_text,a.image_url,a.image_alt,a.published_at,a.updated_at,a.source_text,c.name category_name,u.name author_name FROM articles a JOIN categories c ON c.id=a.category_id JOIN users u ON u.id=a.author_id WHERE a.slug=? AND a.status='published' AND a.published_at<=CURRENT_TIMESTAMP").bind(decodeURIComponent(match[1])).first();
+  if(!article)return context.next();
+  const asset=await context.next(); if(!asset.headers.get('Content-Type')?.includes('text/html'))return asset;
+  let html=await asset.text(); const canonical=`${url.origin}${url.pathname}`; const paragraphs=article.body_text.split(/\n+/).filter(Boolean).map((text)=>`<p>${escapeHtml(text)}</p>`).join('');
+  const serverArticle=`<article data-server-rendered="true"><p>${escapeHtml(article.category_name)}</p><h1>${escapeHtml(article.title)}</h1><p>${escapeHtml(article.summary)}</p><p>${escapeHtml(article.author_name)} · ${escapeHtml(article.published_at)}</p>${article.image_url?`<img src="${escapeHtml(article.image_url)}" alt="${escapeHtml(article.image_alt||'')}">`:''}<div>${paragraphs}</div></article>`;
+  html=html.replace(/<title>.*?<\/title>/i,`<title>${escapeHtml(article.title)} | 시니어 뉴스</title>`).replace('<div id="root"></div>',`<div id="root">${serverArticle}</div>`);
+  html=replaceMeta(html,'description',article.summary); html=replaceMeta(html,'og:title',article.title,true); html=replaceMeta(html,'og:description',article.summary,true); html=replaceMeta(html,'og:type','article',true); html=replaceMeta(html,'og:url',canonical,true); if(article.image_url)html=replaceMeta(html,'og:image',article.image_url,true);
+  const jsonLd=JSON.stringify({'@context':'https://schema.org','@type':'NewsArticle',headline:article.title,description:article.summary,image:article.image_url?[article.image_url]:undefined,datePublished:article.published_at,dateModified:article.updated_at||article.published_at,author:{'@type':'Person',name:article.author_name},publisher:{'@type':'Organization',name:'시니어 뉴스'},mainEntityOfPage:canonical}).replace(/</g,'\\u003c');
+  html=html.replace('</head>',`<link rel="canonical" href="${escapeHtml(canonical)}"><script type="application/ld+json">${jsonLd}</script></head>`);
+  const headers=new Headers(asset.headers); headers.set('Content-Type','text/html; charset=utf-8'); headers.set('Cache-Control','public, max-age=60'); return new Response(html,{status:asset.status,headers});
+}

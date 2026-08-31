@@ -1,30 +1,8 @@
+import { audit, json, requireUser, verifyMutationRequest } from './utils/auth.js';
 export async function onRequestPost(context) {
-  try {
-    const { request, env } = context;
-    const body = await request.json();
-    const { email } = body;
-
-    if (!email) {
-      return new Response(JSON.stringify({ success: false, message: '이메일 정보가 필요합니다.' }), { 
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    // D1 데이터베이스에서 해당 유저 삭제
-    const result = await env.DB.prepare(
-      'DELETE FROM Users WHERE email = ?'
-    ).bind(email).run();
-
-    return new Response(JSON.stringify({ success: true, message: '회원 탈퇴가 완료되었습니다.' }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-  } catch (error) {
-    return new Response(JSON.stringify({ success: false, message: '서버 오류가 발생했습니다.' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
+  if (!verifyMutationRequest(context.request)) return json({ success: false, message: '잘못된 요청입니다.' }, 403);
+  const auth = await requireUser(context); if (auth.error) return auth.error;
+  await audit(context.env, auth.user.id, 'withdraw', 'user', auth.user.id);
+  await context.env.DB.prepare("UPDATE users SET status='withdrawn', email=('withdrawn-' || id || '-' || email), name='탈퇴한 회원', password_hash=NULL, updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(auth.user.id).run();
+  return json({ success: true }, 200, { 'Set-Cookie': 'token=; HttpOnly; Secure; Path=/; SameSite=Strict; Max-Age=0' });
 }

@@ -75,7 +75,7 @@ export async function verifyJWT(token, secret) {
     }
 
     return payload;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
