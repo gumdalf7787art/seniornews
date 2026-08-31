@@ -1,27 +1,45 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, LoaderCircle } from 'lucide-react';
 import ArticleCard from '../components/ArticleCard';
 import CategoryNewsBlock from '../components/CategoryNewsBlock';
-import { articles, categories, categoryName } from '../data/articles';
+import { categories, categoryName } from '../data/articles';
+import { fetchPublishedArticles } from '../utils/publicArticles';
 
 export default function HomePage() {
-  const lead = articles[0];
-  const latest = articles.slice(3, 6);
-  const popular = [...articles].sort((a, b) => b.views - a.views).slice(0, 5);
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchPublishedArticles({ limit: 30 })
+      .then(setArticles)
+      .catch((requestError) => setError(requestError.message || '기사를 불러오지 못했습니다.'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const lead = articles.find((article) => article.is_featured) || articles[0];
+  const side = useMemo(() => articles.filter((article) => article.id !== lead?.id).slice(0, 4), [articles, lead]);
+  const latest = articles.slice(0, 3);
+  const popular = useMemo(() => [...articles].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 5), [articles]);
+
+  if (loading) return <div className="container admin-loading"><LoaderCircle className="spin" />공개 기사를 불러오는 중입니다.</div>;
+  if (error) return <div className="container empty-state"><h1>뉴스를 불러오지 못했습니다.</h1><p>{error}</p></div>;
+  if (!lead) return <div className="container empty-state"><h1>아직 공개된 기사가 없습니다.</h1><p>관리 페이지에서 기사를 발행하면 이곳에 실제 기사로 표시됩니다.</p></div>;
 
   return (
     <div className="container">
       <section aria-labelledby="today-heading">
-        <div className="section-heading"><h2 id="today-heading">오늘의 주요 뉴스</h2><span className="eyebrow">2026년 8월 31일 월요일</span></div>
+        <div className="section-heading"><h2 id="today-heading">오늘의 주요 뉴스</h2><span className="eyebrow">{lead.publishedAt?.slice(0, 10)}</span></div>
         <div className="lead-grid">
           <article className="lead-main">
-            <Link to={`/article/${lead.slug}`}><img src={lead.image} alt={lead.imageAlt} /></Link>
+            <Link to={`/article/${lead.slug}`}>{lead.image && <img src={lead.image} alt={lead.imageAlt} />}</Link>
             <span className="eyebrow">{categoryName(lead.category)}</span>
             <h1><Link to={`/article/${lead.slug}`}>{lead.title}</Link></h1>
             <p className="summary">{lead.summary}</p>
             <div className="meta"><span>{lead.author}</span><time>{lead.publishedAt}</time></div>
           </article>
-          <div className="side-news" aria-label="주요 뉴스 더보기">{articles.slice(1, 5).map((article) => <ArticleCard key={article.id} article={article} compact />)}</div>
+          <div className="side-news" aria-label="주요 뉴스 더보기">{side.map((article) => <ArticleCard key={article.id} article={article} compact />)}</div>
         </div>
       </section>
 
@@ -31,10 +49,7 @@ export default function HomePage() {
       </section>
 
       <div className="category-sections">
-        {categories.slice(0, 4).map((category) => {
-          const categoryArticles = articles.filter((item) => item.category === category.slug).slice(0, 5);
-          return <CategoryNewsBlock key={category.slug} category={category} articles={categoryArticles} />;
-        })}
+        {categories.slice(0, 4).map((category) => <CategoryNewsBlock key={category.slug} category={category} articles={articles.filter((article) => article.category === category.slug).slice(0, 5)} />)}
       </div>
 
       <div className="popular-policy">
