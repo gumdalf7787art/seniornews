@@ -5,6 +5,8 @@ import { createToken, sendEmail, tokenHash } from './utils/emailTokens.js';
 
 export async function onRequestPost(context) {
   if (!verifyMutationRequest(context.request)) return json({ success: false, message: '잘못된 요청입니다.' }, 403);
+  if (!context.env.DB) return json({ success: false, message: '회원 데이터베이스가 연결되지 않았습니다.' }, 503);
+  if (!context.env.JWT_SECRET) return json({ success: false, message: '로그인 보안 설정이 적용되지 않았습니다.' }, 503);
   try {
     const { email, password, name, agreed } = await context.request.json();
     const normalizedEmail = String(email || '').trim().toLowerCase();
@@ -21,6 +23,8 @@ export async function onRequestPost(context) {
     return json({ success: true, verificationRequired: emailConfigured, user: { id: result.meta.last_row_id, email: normalizedEmail, name: name.trim(), role: 'reader' } }, 201, { 'Set-Cookie': `token=${token}; HttpOnly; Secure; Path=/; SameSite=Strict; Max-Age=86400` });
   } catch (error) {
     if (String(error.message).includes('UNIQUE')) return json({ success: false, message: '이미 가입된 이메일입니다.' }, 409);
-    return json({ success: false, message: '회원가입을 처리하지 못했습니다.' }, 500);
+    const errorId = crypto.randomUUID();
+    console.error('signup_failed', { errorId, name: error?.name, message: error?.message, stack: error?.stack });
+    return json({ success: false, message: `회원가입을 처리하지 못했습니다. 오류번호: ${errorId}` }, 500);
   }
 }
