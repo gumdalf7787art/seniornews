@@ -113,7 +113,8 @@ export default function MyPage({ user, setUser }) {
     <div className="mypage-layout">
       <nav className="profile-nav" aria-label="마이페이지 메뉴">
         {tabItems.map(({ id, label, icon: Icon }) => <button key={id} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}><Icon size={19} aria-hidden="true" />{label}</button>)}
-        {['editor', 'admin'].includes(user.role) && <Link className="primary-button" to="/admin">기사 관리로 이동</Link>}
+        {user.role === 'admin' && <Link className="primary-button" to="/creator">제작자 운영센터</Link>}
+        {['editor', 'admin'].includes(user.role) && <Link className="secondary-button" to="/admin">기사 관리로 이동</Link>}
       </nav>
 
       <section className="panel mypage-panel">

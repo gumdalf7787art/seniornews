@@ -13,6 +13,7 @@ const ArticlePage = lazy(() => import('./pages/ArticlePage'));
 const SearchPage = lazy(() => import('./pages/SearchPage'));
 const MyPage = lazy(() => import('./pages/MyPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
+const CreatorPage = lazy(() => import('./pages/CreatorPage'));
 const InfoPage = lazy(() => import('./pages/InfoPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 
@@ -98,6 +99,7 @@ export default function App() {
             <Route path="search" element={<SearchPage />} />
             <Route path="mypage" element={checkingSession ? <Loading /> : user ? <MyPage user={user} setUser={setUser} /> : <Navigate to="/login?next=/mypage" replace />} />
             <Route path="admin" element={checkingSession ? <Loading /> : ['editor', 'admin'].includes(user?.role) ? <AdminPage user={user} /> : <Navigate to="/" replace />} />
+            <Route path="creator" element={checkingSession ? <Loading /> : user?.role === 'admin' ? <CreatorPage user={user} /> : <Navigate to="/" replace />} />
             <Route path="about" element={<InfoPage type="about" />} />
             <Route path="editorial-policy" element={<InfoPage type="editorial" />} />
             <Route path="corrections" element={<InfoPage type="corrections" />} />
