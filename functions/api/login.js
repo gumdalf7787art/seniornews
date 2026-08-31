@@ -10,7 +10,8 @@ export async function onRequestPost(context) {
     const { email, password } = await context.request.json(); const normalizedEmail = String(email || '').trim().toLowerCase();
     if (!normalizedEmail || !password) return json({ success: false, message: '이메일과 비밀번호를 입력해 주세요.' }, 400);
     if (!context.env.DB) return json({ success: false, message: '로그인 서버 설정을 확인하는 중입니다. 잠시 후 다시 시도해 주세요.' }, 503);
-    const ipHash = await digest(context.request.headers.get('CF-Connecting-IP') || 'local');
+    let ipHash = '';
+    try { ipHash = await digest(context.request.headers.get('CF-Connecting-IP') || 'local'); } catch { ipHash = ''; }
     const recent = await context.env.DB.prepare("SELECT COUNT(*) count FROM login_attempts WHERE email=? AND succeeded=0 AND attempted_at > datetime('now','-15 minutes')").bind(normalizedEmail).first();
     if (Number(recent?.count || 0) >= 5) return json({ success: false, message: '로그인 시도가 많습니다. 15분 뒤 다시 시도해 주세요.' }, 429);
     const user = await context.env.DB.prepare('SELECT * FROM users WHERE email=? AND status=?').bind(normalizedEmail, 'active').first();
