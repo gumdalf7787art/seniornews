@@ -58,6 +58,16 @@ class AppErrorBoundary extends Component {
 export default function App() {
   const [user, setUser] = useState(null);
   const [checkingSession, setCheckingSession] = useState(true);
+  const handleAuthSuccess = (value) => {
+    if (value && typeof value === 'object') {
+      setUser(value);
+      setCheckingSession(false);
+      return;
+    }
+    if (value) {
+      fetch('/api/auth/me', { credentials: 'include' }).then((response) => response.ok ? response.json() : null).then((data) => setUser(data?.user || null)).finally(() => setCheckingSession(false));
+    }
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -95,12 +105,12 @@ export default function App() {
             <Route path="terms" element={<InfoPage type="terms" />} />
             <Route path="contact" element={<InfoPage type="contact" />} />
           </Route>
-          <Route path="login" element={<Login setIsLoggedIn={(value) => value && window.location.reload()} />} />
-          <Route path="signup" element={<SignUp setIsLoggedIn={(value) => value && window.location.reload()} />} />
+          <Route path="login" element={<Login setIsLoggedIn={handleAuthSuccess} />} />
+          <Route path="signup" element={<SignUp setIsLoggedIn={handleAuthSuccess} />} />
           <Route path="reset-password" element={<ResetPasswordPage />} />
-          <Route path="auth/kakao/callback" element={<KakaoCallback setIsLoggedIn={(value) => value && window.location.reload()} />} />
-          <Route path="auth/naver/callback" element={<NaverCallback setIsLoggedIn={(value) => value && window.location.reload()} />} />
-          <Route path="auth/google/callback" element={<GoogleCallback setIsLoggedIn={(value) => value && window.location.reload()} />} />
+          <Route path="auth/kakao/callback" element={<KakaoCallback setIsLoggedIn={handleAuthSuccess} />} />
+          <Route path="auth/naver/callback" element={<NaverCallback setIsLoggedIn={handleAuthSuccess} />} />
+          <Route path="auth/google/callback" element={<GoogleCallback setIsLoggedIn={handleAuthSuccess} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
