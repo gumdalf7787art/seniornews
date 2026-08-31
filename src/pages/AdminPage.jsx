@@ -299,7 +299,13 @@ export default function AdminPage({ user }) {
   const uploadImage = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) return setMessage("이미지 파일을 선택해 주세요.");
+    if (!file.type.startsWith("image/")) {
+      const notice = "이미지 파일만 첨부할 수 있습니다.";
+      setMessage(notice);
+      window.alert(notice);
+      event.target.value = "";
+      return;
+    }
     if (imagePreviewUrl.startsWith("blob:")) URL.revokeObjectURL(imagePreviewUrl);
     const previewUrl = URL.createObjectURL(file);
     setImagePreviewUrl(previewUrl);
@@ -325,7 +331,9 @@ export default function AdminPage({ user }) {
     } catch (error) {
       setPendingImage(null);
       setImageUploadStatus("파일 처리 실패");
-      setMessage(`${error.message || "이미지를 처리하지 못했습니다."} JPG, PNG 또는 WEBP 파일로 다시 시도해 주세요.`);
+      const notice = `${error.message || "이미지를 처리하지 못했습니다."} JPG, PNG 또는 WEBP 파일로 다시 시도해 주세요.`;
+      setMessage(notice);
+      window.alert(notice);
     }
     event.target.value = "";
   };
