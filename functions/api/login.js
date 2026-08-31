@@ -10,6 +10,7 @@ export async function onRequestPost(context) {
     const { email, password } = await context.request.json(); const normalizedEmail = String(email || '').trim().toLowerCase();
     if (!normalizedEmail || !password) return json({ success: false, message: '이메일과 비밀번호를 입력해 주세요.' }, 400);
     if (!context.env.DB) return json({ success: false, message: '로그인 서버 설정을 확인하는 중입니다. 잠시 후 다시 시도해 주세요.' }, 503);
+    if (!context.env.JWT_SECRET) return json({ success: false, message: '로그인 세션 설정이 누락되었습니다. 관리자에게 알려 주세요.' }, 503);
     let ipHash = '';
     try { ipHash = await digest(context.request.headers.get('CF-Connecting-IP') || 'local'); } catch { ipHash = ''; }
     let recentCount = 0;
@@ -26,7 +27,6 @@ export async function onRequestPost(context) {
     try { valid = Boolean(user && await verifyPassword(password, user.password_hash)); } catch { valid = false; }
     try { await context.env.DB.prepare('INSERT INTO login_attempts(email,ip_hash,succeeded) VALUES(?,?,?)').bind(normalizedEmail, ipHash, valid ? 1 : 0).run(); } catch { /* 로그인 기록 장애가 인증을 막지 않도록 합니다. */ }
     if (!valid) return json({ success: false, message: '이메일 또는 비밀번호를 확인해 주세요.' }, 401);
-    if (!context.env.JWT_SECRET) return json({ success: false, message: '로그인 세션 설정이 누락되었습니다. 관리자에게 알려 주세요.' }, 503);
     const token = await signJWT({ sub: user.id, email: user.email, role: user.role }, context.env.JWT_SECRET);
     return json({ success: true, user: { id: user.id, email: user.email, name: user.name, role: user.role } }, 200, { 'Set-Cookie': `token=${token}; HttpOnly; Secure; Path=/; SameSite=Strict; Max-Age=86400` });
   } catch (error) {
