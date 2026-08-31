@@ -77,6 +77,10 @@ export default function AdminPage({ user }) {
   };
 
   const save = async (status) => {
+    if (uploading || uploadingBlockId) {
+      setMessage('이미지 업로드가 끝난 뒤 저장 또는 발행해 주세요.');
+      return;
+    }
     const { bodyJson, bodyText } = serializeBlocks(form.blocks);
     const payload = { ...form, slug: form.slug || makeSlug(form.title), status, body_json: bodyJson, body_text: bodyText };
     if (payload.slug !== form.slug) setForm((current) => ({ ...current, slug: payload.slug }));
@@ -130,6 +134,9 @@ export default function AdminPage({ user }) {
   const uploadImage = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    const previousUrl = form.image_url;
+    const previewUrl = URL.createObjectURL(file);
+    setForm((current) => ({ ...current, image_url: previewUrl }));
     const formData = new FormData();
     formData.append('file', file);
     formData.append('alt', form.image_alt.trim() || '대표 이미지 설명 미입력');
@@ -139,9 +146,12 @@ export default function AdminPage({ user }) {
       const response = await fetch('/api/admin/media', { method: 'POST', credentials: 'include', headers: { 'X-Requested-With': 'SeniorNews' }, body: formData });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
+      URL.revokeObjectURL(previewUrl);
       setForm((current) => ({ ...current, image_url: data.url }));
       setMessage('대표 이미지 첨부가 완료되었습니다. 아래에 보이는 썸네일을 확인한 뒤 이미지 설명을 입력하고 저장해 주세요.');
     } catch (error) {
+      URL.revokeObjectURL(previewUrl);
+      setForm((current) => ({ ...current, image_url: previousUrl }));
       setMessage(error.message || '이미지를 올리지 못했습니다.');
     } finally {
       setUploading(false);

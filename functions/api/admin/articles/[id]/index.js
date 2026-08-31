@@ -23,7 +23,6 @@ export async function onRequestPatch(context) {
   const current = await context.env.DB.prepare('SELECT id,author_id,status FROM articles WHERE id=?').bind(id).first();
   if (!current) return json({ message: '기사를 찾을 수 없습니다.' }, 404);
   if (auth.user.role === 'editor' && Number(current.author_id) !== Number(auth.user.id)) return json({ message: '본인이 작성한 기사만 수정할 수 있습니다.' }, 403);
-  if (current.status === 'published' && auth.user.role !== 'admin') return json({ message: '발행된 기사는 제작자만 수정할 수 있습니다.' }, 403);
   const category = await context.env.DB.prepare('SELECT id FROM categories WHERE slug=? AND is_active=1').bind(data.category).first();
   if (!category) return json({ message: '카테고리를 확인해 주세요.' }, 400);
   const nextStatus = current.status === 'published' && auth.user.role === 'admin' ? 'published' : (['review', 'published'].includes(data.status) ? data.status : 'draft');
