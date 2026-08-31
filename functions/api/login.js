@@ -31,3 +31,5 @@ export async function onRequestPost(context) {
     return json({ success: false, message: '로그인 서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.' }, 503);
   }
 }
+
+// Runtime secret configuration is managed by Cloudflare Pages.
