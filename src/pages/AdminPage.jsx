@@ -130,18 +130,17 @@ export default function AdminPage({ user }) {
   const uploadImage = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!form.image_alt.trim()) { setMessage('이미지를 올리기 전에 이미지 설명을 먼저 입력해 주세요.'); event.target.value = ''; return; }
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('alt', form.image_alt.trim());
+    formData.append('alt', form.image_alt.trim() || '대표 이미지 설명 미입력');
     setUploading(true);
-    setMessage('이미지를 올리는 중입니다.');
+    setMessage(`“${file.name}” 이미지를 업로드하는 중입니다.`);
     try {
       const response = await fetch('/api/admin/media', { method: 'POST', credentials: 'include', headers: { 'X-Requested-With': 'SeniorNews' }, body: formData });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
       setForm((current) => ({ ...current, image_url: data.url }));
-      setMessage('대표 이미지를 올렸습니다.');
+      setMessage('대표 이미지 첨부가 완료되었습니다. 아래에 보이는 썸네일을 확인한 뒤 이미지 설명을 입력하고 저장해 주세요.');
     } catch (error) {
       setMessage(error.message || '이미지를 올리지 못했습니다.');
     } finally {
@@ -153,14 +152,9 @@ export default function AdminPage({ user }) {
   const uploadInlineImage = async (block, event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!block.alt.trim()) {
-      setMessage('본문 이미지를 올리기 전에 이미지 설명을 먼저 입력해 주세요.');
-      event.target.value = '';
-      return;
-    }
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('alt', block.alt.trim());
+    formData.append('alt', block.alt.trim() || '본문 이미지 설명 미입력');
     setUploadingBlockId(block.id);
     setMessage('본문 이미지를 업로드하는 중입니다.');
     try {
@@ -168,7 +162,7 @@ export default function AdminPage({ user }) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
       setForm((current) => ({ ...current, blocks: current.blocks.map((item) => item.id === block.id ? { ...item, url: data.url } : item) }));
-      setMessage('본문 이미지를 추가했습니다.');
+      setMessage('본문 이미지 첨부가 완료되었습니다. 이미지 설명을 입력한 뒤 저장해 주세요.');
     } catch (error) {
       setMessage(error.message || '본문 이미지를 업로드하지 못했습니다.');
     } finally {
