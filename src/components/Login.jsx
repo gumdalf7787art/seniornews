@@ -6,7 +6,7 @@ export default function Login({ setIsLoggedIn }) {
   const [form, setForm] = useState({ email: '', password: '' }); const [error, setError] = useState(''); const [loading, setLoading] = useState(false);
   const readResponse = async (response) => { const type = response.headers.get('content-type') || ''; if (type.includes('application/json')) return response.json(); throw new Error(response.status >= 500 ? '로그인 서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.' : '로그인 요청을 처리하지 못했습니다.'); };
   const oauth = async (provider) => {
-    try { const response = await fetch(`/api/auth/start?provider=${provider}`); const data = await readResponse(response); if (!response.ok) throw new Error(data.message); window.location.href = data.authorizationUrl; }
+    try { const response = await fetch(`/api/auth/start?provider=${provider}`, { credentials: 'include', cache: 'no-store' }); const data = await readResponse(response); if (!response.ok) throw new Error(data.message); window.location.href = data.authorizationUrl; }
     catch (err) { setError(err.message || '소셜 로그인을 시작하지 못했습니다.'); }
   };
   const submit = async (event) => { event.preventDefault(); setLoading(true); setError(''); try { const response = await fetch('/api/login', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'SeniorNews' }, body: JSON.stringify(form) }); const data = await readResponse(response); if (!response.ok) throw new Error(data.message); setIsLoggedIn(data.user); navigate(params.get('next') || '/'); } catch (err) { setError(err.message || '로그인하지 못했습니다.'); } finally { setLoading(false); } };
