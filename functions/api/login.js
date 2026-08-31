@@ -18,7 +18,10 @@ export async function onRequestPost(context) {
       recentCount = Number(recent?.failed_count || 0);
     } catch { recentCount = 0; }
     if (recentCount >= 5) return json({ success: false, message: '로그인 시도가 많습니다. 15분 뒤 다시 시도해 주세요.' }, 429);
-    const user = await context.env.DB.prepare('SELECT * FROM users WHERE email=? AND status=?').bind(normalizedEmail, 'active').first();
+    // 일부 기존 D1에는 status 컬럼이 없는 경우가 있어 이메일로 먼저 조회하고
+    // 컬럼이 존재할 때만 활성 상태를 확인합니다.
+    const user = await context.env.DB.prepare('SELECT * FROM users WHERE email=?').bind(normalizedEmail).first();
+    if (user && user.status && user.status !== 'active') return json({ success: false, message: '비활성화된 계정입니다.' }, 403);
     let valid = false;
     try { valid = Boolean(user && await verifyPassword(password, user.password_hash)); } catch { valid = false; }
     try { await context.env.DB.prepare('INSERT INTO login_attempts(email,ip_hash,succeeded) VALUES(?,?,?)').bind(normalizedEmail, ipHash, valid ? 1 : 0).run(); } catch { /* 로그인 기록 장애가 인증을 막지 않도록 합니다. */ }
