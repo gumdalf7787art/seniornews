@@ -15,7 +15,7 @@ export async function currentUser(context) {
   if (!token || !context.env.JWT_SECRET) return null;
   const payload = await verifyJWT(token, context.env.JWT_SECRET);
   if (!payload) return null;
-  return context.env.DB.prepare('SELECT id, email, name, role, status, provider FROM users WHERE id = ? AND status = ?').bind(payload.sub, 'active').first();
+  return context.env.DB.prepare('SELECT id, email, name, role, status, provider, password_hash FROM users WHERE id = ? AND status = ?').bind(payload.sub, 'active').first();
 }
 
 export async function requireUser(context, roles = []) {

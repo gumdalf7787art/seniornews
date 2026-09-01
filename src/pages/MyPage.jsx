@@ -1,16 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bookmark, Clock3, Eye, Heart, LogOut, Trash2, UserRound } from 'lucide-react';
+import { Bookmark, Clock3, Eye, LogOut, Trash2, UserRound } from 'lucide-react';
 import ArticleCard from '../components/ArticleCard';
-import { categories } from '../data/articles';
-import {
-  clearRecentArticles,
-  getInterestedCategories,
-  getReaderSettings,
-  getRecentArticles,
-  saveInterestedCategories,
-  saveReaderSettings,
-} from '../utils/readerPreferences';
+import { clearRecentArticles, getRecentArticles } from '../utils/readerPreferences';
 
 const ROLE_LABELS = { reader: '일반회원', editor: '기자', admin: '관리자' };
 
@@ -37,9 +29,14 @@ export default function MyPage({ user, setUser }) {
   const [tab, setTab] = useState('overview');
   const [bookmarks, setBookmarks] = useState([]);
   const [recentArticles, setRecentArticles] = useState(() => getRecentArticles());
-  const [interests, setInterests] = useState(() => getInterestedCategories());
-  const [readerSettings, setReaderSettings] = useState(() => getReaderSettings());
   const [loading, setLoading] = useState(true);
+  const [accountName, setAccountName] = useState(user.name || '');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [accountFeedback, setAccountFeedback] = useState('');
+  const [accountError, setAccountError] = useState(false);
+  const [savingAccount, setSavingAccount] = useState(false);
 
   const bookmarkedArticles = useMemo(() => bookmarks.map(asArticle), [bookmarks]);
 
@@ -50,6 +47,8 @@ export default function MyPage({ user, setUser }) {
       .catch(() => setBookmarks([]))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => setAccountName(user.name || ''), [user.name]);
 
   const logout = async () => {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'include', headers: { 'X-Requested-With': 'SeniorNews' } });
@@ -74,35 +73,54 @@ export default function MyPage({ user, setUser }) {
     }
   };
 
-  const toggleInterest = (slug) => {
-    const next = interests.includes(slug) ? interests.filter((item) => item !== slug) : [...interests, slug];
-    setInterests(next);
-    saveInterestedCategories(next);
-  };
-
-  const updateReaderSetting = (key, value) => {
-    const next = { ...readerSettings, [key]: value };
-    setReaderSettings(next);
-    saveReaderSettings(next);
-  };
-
   const clearRecent = () => {
     clearRecentArticles();
     setRecentArticles([]);
+  };
+
+  const updateAccount = async (payload) => {
+    const response = await fetch('/api/account', {
+      method: 'PATCH', credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'SeniorNews' },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.message || '계정 정보를 변경하지 못했습니다.');
+    return data;
+  };
+
+  const submitNameChange = async (event) => {
+    event.preventDefault();
+    const name = accountName.trim();
+    if (name.length < 2) { setAccountError(true); setAccountFeedback('이름은 두 글자 이상 입력해 주세요.'); return; }
+    setSavingAccount(true); setAccountFeedback('');
+    try {
+      const data = await updateAccount({ action: 'profile', name });
+      setUser(data.user);
+      setAccountError(false); setAccountFeedback('이름을 변경했습니다.');
+    } catch (error) { setAccountError(true); setAccountFeedback(error.message); }
+    finally { setSavingAccount(false); }
+  };
+
+  const submitPasswordChange = async (event) => {
+    event.preventDefault();
+    if (newPassword.length < 10) { setAccountError(true); setAccountFeedback('새 비밀번호는 10자 이상 입력해 주세요.'); return; }
+    if (newPassword !== passwordConfirm) { setAccountError(true); setAccountFeedback('새 비밀번호와 확인 입력이 일치하지 않습니다.'); return; }
+    setSavingAccount(true); setAccountFeedback('');
+    try {
+      await updateAccount({ action: 'password', currentPassword, newPassword });
+      setCurrentPassword(''); setNewPassword(''); setPasswordConfirm('');
+      setAccountError(false); setAccountFeedback('비밀번호를 변경했습니다. 다음 로그인부터 새 비밀번호를 사용해 주세요.');
+    } catch (error) { setAccountError(true); setAccountFeedback(error.message); }
+    finally { setSavingAccount(false); }
   };
 
   const tabItems = [
     { id: 'overview', label: '내 뉴스', icon: Eye },
     { id: 'bookmarks', label: '저장한 기사', icon: Bookmark },
     { id: 'recent', label: '최근 본 기사', icon: Clock3 },
-    { id: 'preferences', label: '관심·읽기 설정', icon: Heart },
     { id: 'account', label: '회원정보·계정', icon: UserRound },
   ];
-
-  const readingSettings = <div className="preference-list" aria-label="읽기 설정">
-    <label className="preference-row"><span><strong>큰 글씨로 보기</strong><small>본문과 화면의 글자를 더 크게 표시합니다.</small></span><input type="checkbox" checked={readerSettings.largeText} onChange={(event) => updateReaderSetting('largeText', event.target.checked)} /></label>
-    <label className="preference-row"><span><strong>고대비 화면</strong><small>글자와 배경의 대비를 높여 더 선명하게 봅니다.</small></span><input type="checkbox" checked={readerSettings.highContrast} onChange={(event) => updateReaderSetting('highContrast', event.target.checked)} /></label>
-  </div>;
 
   return <div className="container mypage">
     <div className="mypage-welcome">
@@ -120,14 +138,12 @@ export default function MyPage({ user, setUser }) {
       <section className="panel mypage-panel">
         {tab === 'overview' && <>
           <div className="panel-heading"><div><h2>내 뉴스</h2><p>저장한 기사와 최근 읽은 기사를 한눈에 확인하세요.</p></div></div>
-          <div className="member-stats" aria-label="내 뉴스 요약">
+          <div className="member-stats member-stats-two" aria-label="내 뉴스 요약">
             <button onClick={() => setTab('bookmarks')}><Bookmark aria-hidden="true" /><strong>{loading ? '-' : bookmarkedArticles.length}</strong><span>저장한 기사</span></button>
             <button onClick={() => setTab('recent')}><Clock3 aria-hidden="true" /><strong>{recentArticles.length}</strong><span>최근 본 기사</span></button>
-            <button onClick={() => setTab('preferences')}><Heart aria-hidden="true" /><strong>{interests.length}</strong><span>관심 카테고리</span></button>
           </div>
-          <div className="mypage-overview-grid">
+          <div className="mypage-overview-grid mypage-overview-single">
             <section><div className="subsection-heading"><h3>최근 본 기사</h3><button className="text-button" onClick={() => setTab('recent')}>전체 보기</button></div>{recentArticles.length ? <div className="mypage-list">{recentArticles.slice(0, 3).map((article) => <Link key={article.slug} to={`/article/${article.slug}`}><span>{article.title}</span><time>{article.publishedAt?.slice(0, 10)}</time></Link>)}</div> : <p className="muted-copy">아직 읽은 기사가 없습니다.</p>}</section>
-            <section><div className="subsection-heading"><h3>관심 카테고리</h3><button className="text-button" onClick={() => setTab('preferences')}>설정</button></div>{interests.length ? <div className="interest-summary">{categories.filter((category) => interests.includes(category.slug)).map((category) => <Link key={category.slug} to={`/category/${category.slug}`}>{category.name}</Link>)}</div> : <p className="muted-copy">관심 있는 분야를 선택하면 나에게 맞는 뉴스를 찾기 쉬워집니다.</p>}</section>
           </div>
         </>}
 
@@ -135,9 +151,7 @@ export default function MyPage({ user, setUser }) {
 
         {tab === 'recent' && <><div className="panel-heading"><div><h2>최근 본 기사</h2><p>이 기기에서 최근에 읽은 기사입니다.</p></div>{recentArticles.length > 0 && <button className="text-button" onClick={clearRecent}>기록 지우기</button>}</div>{recentArticles.length ? <div className="saved-article-list">{recentArticles.map((article) => <div key={article.slug} className="saved-article"><ArticleCard article={article} compact /><time className="viewed-date">읽은 시간 {new Date(article.viewedAt).toLocaleDateString('ko-KR')}</time></div>)}</div> : <EmptyState title="최근 본 기사가 없습니다." description="기사를 읽으면 최근 본 기사 목록에 자동으로 표시됩니다." action={<Link className="primary-button" to="/">뉴스 둘러보기</Link>} />}</>}
 
-        {tab === 'preferences' && <><div className="panel-heading"><div><h2>관심·읽기 설정</h2><p>관심 분야와 화면 보기를 내게 맞게 조정하세요.</p></div></div><section className="settings-section"><h3>관심 카테고리</h3><p>관심 있는 분야를 선택해두면 다음 단계의 맞춤 뉴스 기능에 활용됩니다.</p><div className="interest-picker">{categories.map((category) => <button key={category.slug} className={interests.includes(category.slug) ? 'selected' : ''} aria-pressed={interests.includes(category.slug)} onClick={() => toggleInterest(category.slug)}>{category.name}</button>)}</div></section><section className="settings-section"><h3>읽기 환경</h3>{readingSettings}</section></>}
-
-        {tab === 'account' && <><div className="panel-heading"><div><h2>회원정보·계정</h2><p>현재 로그인한 계정 정보를 확인합니다.</p></div></div><div className="account-details"><div><span>이름</span><strong>{user.name || '-'}</strong></div><div><span>이메일</span><strong>{user.email || '-'}</strong></div><div><span>회원 구분</span><strong>{ROLE_LABELS[user.role] || '일반회원'}</strong></div></div><div className="account-actions"><button className="secondary-button" onClick={logout}><LogOut size={18} />로그아웃</button><button className="danger-button" onClick={withdraw}>회원 탈퇴</button></div><p className="account-help">비밀번호 변경과 이메일 인증 기능은 메일 발송 기능을 연결하는 단계에서 추가됩니다.</p></>}
+        {tab === 'account' && <><div className="panel-heading"><div><h2>회원정보·계정</h2><p>이름과 비밀번호를 직접 관리할 수 있습니다.</p></div></div><div className="account-details"><div><span>이메일</span><strong>{user.email || '-'}</strong></div><div><span>회원 구분</span><strong>{ROLE_LABELS[user.role] || '일반회원'}</strong></div></div><div className="account-forms"><form onSubmit={submitNameChange}><h3>이름 변경</h3><label className="field"><span>이름</span><input value={accountName} onChange={(event) => setAccountName(event.target.value)} maxLength="40" required /></label><button className="secondary-button" disabled={savingAccount}>이름 저장</button></form><form onSubmit={submitPasswordChange}><h3>비밀번호 변경</h3><label className="field"><span>현재 비밀번호</span><input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} autoComplete="current-password" required /></label><label className="field"><span>새 비밀번호</span><input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} autoComplete="new-password" minLength="10" required /></label><label className="field"><span>새 비밀번호 확인</span><input type="password" value={passwordConfirm} onChange={(event) => setPasswordConfirm(event.target.value)} autoComplete="new-password" minLength="10" required /></label><small>영문·숫자를 포함해 10자 이상 사용해 주세요.</small><button className="primary-button" disabled={savingAccount}>비밀번호 변경</button></form></div>{accountFeedback && <p className={`account-feedback ${accountError ? 'error' : ''}`} role="status">{accountFeedback}</p>}<div className="account-actions"><button className="secondary-button" onClick={logout}><LogOut size={18} />로그아웃</button><button className="danger-button" onClick={withdraw}>회원 탈퇴</button></div></>}
       </section>
     </div>
   </div>;

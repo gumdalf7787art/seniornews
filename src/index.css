@@ -253,12 +253,14 @@ main { flex: 1; }
 .panel-heading p { margin: 7px 0 0; color: var(--muted); }
 .count-label { background: var(--green-100); color: var(--green-900); min-height: 32px; padding: 0 11px; }
 .member-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 34px; }
+.member-stats-two { grid-template-columns: repeat(2, 1fr); }
 .member-stats button { min-height: 150px; text-align: left; padding: 18px; border: 1px solid var(--line); background: #fff; display: grid; grid-template-columns: 1fr auto; align-content: space-between; border-radius: 7px; color: var(--green-900); }
 .member-stats svg { width: 24px; height: 24px; }
 .member-stats strong { grid-column: 1 / -1; color: var(--ink); font-size: 35px; line-height: 1; margin-top: 16px; }
 .member-stats span { grid-column: 1 / -1; margin-top: 5px; color: var(--muted); font-size: 15px; font-weight: 700; }
 .member-stats button:hover { border-color: var(--green-700); background: var(--surface-soft); }
 .mypage-overview-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 24px; }
+.mypage-overview-single { grid-template-columns: 1fr; }
 .mypage-overview-grid > section { border-top: 3px solid var(--green-900); padding-top: 14px; }
 .subsection-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .subsection-heading h3, .settings-section h3 { margin: 0; font-size: 21px; letter-spacing: -.6px; }
@@ -291,6 +293,14 @@ main { flex: 1; }
 .account-details { display: grid; border-top: 1px solid var(--line); }
 .account-details > div { min-height: 62px; display: grid; grid-template-columns: 130px 1fr; align-items: center; gap: 14px; border-bottom: 1px solid var(--line); }
 .account-details span { color: var(--muted); font-weight: 700; }
+.account-forms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; margin-top: 34px; }
+.account-forms form { display: grid; align-content: start; gap: 13px; padding: 24px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-soft); }
+.account-forms h3 { margin: 0 0 3px; font-size: 20px; }
+.account-forms .field { gap: 6px; }
+.account-forms small { color: var(--muted); line-height: 1.5; }
+.account-forms button { justify-self: start; margin-top: 5px; }
+.account-feedback { margin: 18px 0 0; color: var(--green-900); font-weight: 700; }
+.account-feedback.error { color: #b63a32; }
 .account-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 30px; }
 .account-help { margin: 22px 0 0; color: var(--muted); font-size: 14px; }
 .newsroom-admin { padding-top: 48px; }
@@ -529,6 +539,7 @@ main { flex: 1; }
   .senior-briefing { grid-template-columns: auto minmax(0, 1fr); gap: 10px; }
   .senior-briefing-controls { grid-column: 2; justify-content: flex-end; }
   .mypage-layout { grid-template-columns: 1fr; }
+  .account-forms { grid-template-columns: 1fr; }
   .profile-nav { grid-template-columns: repeat(3, 1fr); }
   .profile-nav .primary-button { margin-top: 0; }
   .editor-layout { grid-template-columns: 1fr; }
