@@ -36,6 +36,7 @@ export default function ArticlePage({ user }) {
   const [article, setArticle] = useState(null);
   const [related, setRelated] = useState([]);
   const [sidebarArticles, setSidebarArticles] = useState([]);
+  const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [bookmarked, setBookmarked] = useState(false);
   const [speaking, setSpeaking] = useState(false);
@@ -50,8 +51,16 @@ export default function ArticlePage({ user }) {
       return normalizeArticle(data.article);
     }).then((loaded) => {
       setArticle(loaded); saveRecentArticle(loaded); document.title = `${loaded.title} | 시니어 라이프 뉴스`;
-      return Promise.all([fetchPublishedArticles({ category: loaded.category, limit: 4 }), fetchPublishedArticles({ limit: 30 })]);
-    }).then(([items, allItems]) => { setRelated(items.filter((item) => item.slug !== slug).slice(0, 3)); setSidebarArticles(allItems); }).catch(() => setArticle(null)).finally(() => setLoading(false));
+      return Promise.all([
+        fetchPublishedArticles({ category: loaded.category, limit: 4 }),
+        fetchPublishedArticles({ limit: 30 }),
+        fetch('/api/banners').then(async (response) => {
+          if (!response.ok) throw new Error('광고 배너를 불러오지 못했습니다.');
+          const data = await response.json();
+          return data.banners || [];
+        }).catch(() => []),
+      ]);
+    }).then(([items, allItems, activeBanners]) => { setRelated(items.filter((item) => item.slug !== slug).slice(0, 3)); setSidebarArticles(allItems); setBanners(activeBanners); }).catch(() => setArticle(null)).finally(() => setLoading(false));
     return () => { document.title = '시니어 라이프 뉴스 | 오늘을 더 정확하고 쉽게'; };
   }, [slug]);
 
@@ -95,7 +104,7 @@ export default function ArticlePage({ user }) {
         {related.length > 0 && <section className="related"><div className="section-heading"><h2>함께 읽으면 좋은 기사</h2></div><div className="news-grid">{related.map((item) => <ArticleCard key={item.id} article={item} />)}</div></section>}
         <NewsSidebar className="mobile-article-sidebar mobile-latest-sidebar" excludeId={article.id} showPopular={false} articles={sidebarArticles} />
       </article>
-      <NewsSidebar className="desktop-article-sidebar" excludeId={article.id} articles={sidebarArticles} />
+      <NewsSidebar className="desktop-article-sidebar" excludeId={article.id} articles={sidebarArticles} showAd banners={banners} />
     </div>
   </>;
 }
