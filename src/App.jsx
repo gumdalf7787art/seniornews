@@ -16,6 +16,7 @@ const AdminPage = lazy(() => import('./pages/AdminPage'));
 const CreatorPage = lazy(() => import('./pages/CreatorPage'));
 const InfoPage = lazy(() => import('./pages/InfoPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+const BrandPreviewPage = lazy(() => import('./pages/BrandPreviewPage'));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -106,6 +107,7 @@ export default function App() {
             <Route path="privacy" element={<InfoPage type="privacy" />} />
             <Route path="terms" element={<InfoPage type="terms" />} />
             <Route path="contact" element={<InfoPage type="contact" />} />
+            <Route path="brand-preview" element={<BrandPreviewPage />} />
           </Route>
           <Route path="login" element={<Login setIsLoggedIn={handleAuthSuccess} />} />
           <Route path="signup" element={<SignUp setIsLoggedIn={handleAuthSuccess} />} />
