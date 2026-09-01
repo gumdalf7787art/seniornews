@@ -233,14 +233,12 @@ export default function NewsLayout({ user }) {
               <Link to="/contact">문의</Link>
             </div>
             <div className="footer-meta desktop-footer-meta">
-              <p>법인명: (주)메디프라퍼 | 주소: 서울특별시 동대문구 망우로 60, 6층 (휘경동, 금자탑빌딩) | 대표전화: 02-1234-1234 | 대표이메일: contact@mediproper.com | 팩스: 02-5678-5678</p>
-              <p>청소년보호책임자: 민성기 | 제호: 시니어 라이프 뉴스 | 등록번호: 서울 아 ***** | 등록일: 2026-00-00 | 최초발행일: 2026-09-16 | 발행인: 민성기 | 편집인: 이재현</p>
+              {footerInfoLines.map((line) => <p key={line}>{line}</p>)}
             </div>
             <details className="mobile-footer-details">
               <summary>사업자·매체 정보 보기</summary>
               <div className="footer-meta">
-                <p>법인명: (주)메디프라퍼 | 주소: 서울특별시 동대문구 망우로 60, 6층 (휘경동, 금자탑빌딩) | 대표전화: 02-1234-1234 | 대표이메일: contact@mediproper.com | 팩스: 02-5678-5678</p>
-                <p>청소년보호책임자: 민성기 | 제호: 시니어 라이프 뉴스 | 등록번호: 서울 아 ***** | 등록일: 2026-00-00 | 최초발행일: 2026-09-16 | 발행인: 민성기 | 편집인: 이재현</p>
+                {footerInfoLines.map((line) => <p key={line}>{line}</p>)}
               </div>
             </details>
             <p className="footer-note">© 2026 Senior Life News. All rights reserved.</p>
@@ -277,3 +275,10 @@ export default function NewsLayout({ user }) {
     </div>
   );
 }
+
+const footerInfoLines = [
+  '법인명: (주)메디프라퍼 | 주소: 서울특별시 동대문구 망우로 60, 6층 (휘경동, 금자탑빌딩)',
+  '대표전화: 02-1234-1234 | 대표이메일: contact@mediproper.com | 팩스: 02-5678-5678',
+  '제호: 시니어 라이프 뉴스 | 등록번호: 서울 아 ***** | 등록일: 2026-00-00 | 최초발행일: 2026-09-16',
+  '발행인: 민성기 | 편집인: 이재현 | 청소년보호책임자: 민성기',
+];
