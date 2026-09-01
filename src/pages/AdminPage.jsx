@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Archive,
@@ -78,6 +78,12 @@ export default function AdminPage({ user }) {
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
   const [imageUploadStatus, setImageUploadStatus] = useState("");
   const [inlineImageUploads, setInlineImageUploads] = useState(0);
+  const [editorError, setEditorError] = useState("");
+  const [editorErrorTarget, setEditorErrorTarget] = useState("");
+  const titleRef = useRef(null);
+  const summaryRef = useRef(null);
+  const imageSectionRef = useRef(null);
+  const bodySectionRef = useRef(null);
 
   const isCreator = user.role === "admin";
   const displayRole = isCreator ? "관리자" : "기자";
@@ -142,6 +148,17 @@ export default function AdminPage({ user }) {
     return latin.length >= 3 ? latin : `article-${Date.now()}`;
   };
 
+  const showEditorError = (message, target = "top") => {
+    setMessage(message);
+    setEditorError(message);
+    setEditorErrorTarget(target);
+    const element = { title: titleRef, summary: summaryRef, image: imageSectionRef, body: bodySectionRef }[target]?.current;
+    window.setTimeout(() => {
+      element?.scrollIntoView({ behavior: "smooth", block: "center" });
+      element?.focus?.();
+    }, 0);
+  };
+
   const openNewArticle = () => {
     if (imagePreviewUrl.startsWith("blob:")) URL.revokeObjectURL(imagePreviewUrl);
     setForm(emptyForm);
@@ -150,6 +167,8 @@ export default function AdminPage({ user }) {
     setImageUploadStatus("");
     setEditingId(null);
     setMessage("");
+    setEditorError("");
+    setEditorErrorTarget("");
     setView("editor");
   };
 
@@ -170,12 +189,14 @@ export default function AdminPage({ user }) {
     setImagePreviewUrl(article.image_url || "");
     setImageUploadStatus(article.image_url ? "저장된 대표 이미지" : "");
     setMessage("");
+    setEditorError("");
+    setEditorErrorTarget("");
     setView("editor");
   };
 
   const save = async (status) => {
     if (uploading || inlineImageUploads) {
-      setMessage("이미지 업로드가 끝난 뒤 저장 또는 발행해 주세요.");
+      showEditorError("이미지 업로드가 끝난 뒤 저장 또는 발행해 주세요.", "body");
       return;
     }
     const { bodyJson, bodyText } = serializeBlocks(form.blocks);
@@ -188,16 +209,20 @@ export default function AdminPage({ user }) {
     };
     if (payload.slug !== form.slug)
       setForm((current) => ({ ...current, slug: payload.slug }));
-    if (
-      !payload.title.trim() ||
-      !payload.summary.trim() ||
-      !payload.body_text.trim()
-    ) {
-      setMessage("제목, 요약, 본문은 꼭 입력해 주세요.");
+    if (!payload.title.trim()) {
+      showEditorError("기사 제목을 입력해 주세요.", "title");
+      return;
+    }
+    if (!payload.summary.trim()) {
+      showEditorError("기사 요약을 입력해 주세요.", "summary");
+      return;
+    }
+    if (!payload.body_text.trim()) {
+      showEditorError("기사 본문을 입력해 주세요.", "body");
       return;
     }
     if ((payload.image_url || pendingImage) && !payload.image_alt.trim()) {
-      setMessage("대표 이미지를 사용하려면 이미지 설명을 입력해 주세요.");
+      showEditorError("대표 이미지를 사용하려면 이미지 설명을 입력해 주세요.", "image");
       return;
     }
     if (
@@ -210,6 +235,8 @@ export default function AdminPage({ user }) {
     )
       return;
     setSaving(true);
+    setEditorError("");
+    setEditorErrorTarget("");
     setMessage(
       status === "review"
         ? "발행을 요청하는 중입니다."
@@ -217,8 +244,10 @@ export default function AdminPage({ user }) {
           ? "기사를 발행하는 중입니다."
           : "기사를 저장하는 중입니다.",
     );
+    let errorTarget = "top";
     try {
       if (pendingImage) {
+        errorTarget = "image";
         setUploading(true);
         setImageUploadStatus("R2 업로드 중");
         setMessage(
@@ -244,9 +273,11 @@ export default function AdminPage({ user }) {
           );
         payload.image_url = imageResult.url;
         setForm((current) => ({ ...current, image_url: imageResult.url }));
+        setPendingImage(null);
         setImagePreviewUrl(imageResult.url);
         setImageUploadStatus("R2 업로드 완료");
       }
+      errorTarget = "top";
       const response = await fetch(
         editingId ? `/api/admin/articles/${editingId}` : "/api/admin/articles",
         {
@@ -259,8 +290,8 @@ export default function AdminPage({ user }) {
           body: JSON.stringify(payload),
         },
       );
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message);
+      const data = await response.json().catch(() => ({ message: "기사 저장 서버의 응답을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요." }));
+      if (!response.ok) throw new Error(data.message || "기사를 저장하지 못했습니다.");
       setMessage(
         status === "review"
           ? "발행 요청을 보냈습니다. 관리자가 바로 발행하거나 수정 후 발행할 수 있습니다."
@@ -277,8 +308,9 @@ export default function AdminPage({ user }) {
       setImageUploadStatus("");
       setEditingId(null);
     } catch (error) {
-      setImageUploadStatus("업로드 실패");
-      setMessage(error.message || "기사를 저장하지 못했습니다.");
+      const fallback = errorTarget === "image" ? "대표 이미지를 R2에 저장하지 못했습니다. 이미지 설정을 확인한 뒤 다시 시도해 주세요." : "기사를 저장하지 못했습니다. 입력한 내용을 확인한 뒤 다시 시도해 주세요.";
+      if (errorTarget === "image") setImageUploadStatus("업로드 실패");
+      showEditorError(error.message || fallback, errorTarget);
     } finally {
       setSaving(false);
       setUploading(false);
@@ -447,6 +479,30 @@ export default function AdminPage({ user }) {
         <p role="status" className="admin-notice">
           {message}
         </p>
+      )}
+
+      {editorError && (
+        <div className="editor-dialog-backdrop" role="presentation">
+          <div
+            className="editor-dialog editor-notice-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="article-save-error-title"
+          >
+            <h3 id="article-save-error-title">기사 저장 안내</h3>
+            <p>{editorError}</p>
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => {
+                setEditorError("");
+                setEditorErrorTarget("");
+              }}
+            >
+              확인
+            </button>
+          </div>
+        </div>
       )}
 
       <nav className="admin-tabs" aria-label="기사 관리 메뉴">
@@ -640,9 +696,11 @@ export default function AdminPage({ user }) {
               <label htmlFor="title">기사 제목</label>
               <input
                 id="title"
+                ref={titleRef}
                 name="title"
                 value={form.title}
                 onChange={update}
+                aria-invalid={editorErrorTarget === "title"}
                 required
                 maxLength={150}
                 placeholder="독자가 바로 이해할 수 있는 제목을 입력하세요"
@@ -667,15 +725,21 @@ export default function AdminPage({ user }) {
               <label htmlFor="summary">기사 한눈에 보기</label>
               <textarea
                 id="summary"
+                ref={summaryRef}
                 name="summary"
                 value={form.summary}
                 onChange={update}
+                aria-invalid={editorErrorTarget === "summary"}
                 required
                 maxLength={300}
                 placeholder="목록과 공유 화면에 보일 핵심 내용을 2~3문장으로 작성하세요"
               />
             </div>
-            <fieldset className="editor-image-field">
+            <fieldset
+              ref={imageSectionRef}
+              tabIndex={-1}
+              className={`editor-image-field ${editorErrorTarget === "image" ? "has-editor-error" : ""}`}
+            >
               <legend>대표 이미지</legend>
               <div className="field">
                 <label htmlFor="image_alt">
@@ -744,7 +808,11 @@ export default function AdminPage({ user }) {
                 placeholder="예: 보건복지부 공개 자료"
               />
             </div>
-            <div className="field">
+            <div
+              ref={bodySectionRef}
+              tabIndex={-1}
+              className={`field ${editorErrorTarget === "body" ? "has-editor-error" : ""}`}
+            >
               <label>기사 본문</label>
               <ArticleBlockEditor
                 blocks={form.blocks}

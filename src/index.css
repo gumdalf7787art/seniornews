@@ -235,6 +235,8 @@ main { flex: 1; }
 .editor-form-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 16px; }
 .editor-image-field { margin: 26px 0; padding: 20px; border: 1px solid var(--line); }
 .editor-image-field legend { padding: 0 6px; font-weight: 800; }
+.editor-image-field.has-editor-error, .field.has-editor-error .article-rich-editor { border-color: #b4473b; box-shadow: 0 0 0 3px rgba(180,71,59,.14); }
+.field input[aria-invalid="true"], .field textarea[aria-invalid="true"] { border-color: #b4473b; box-shadow: 0 0 0 3px rgba(180,71,59,.14); }
 .required-text { color: var(--orange); font-size: 13px; }
 .upload-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 4px 0 17px; }
 .upload-row input[type=file] { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }

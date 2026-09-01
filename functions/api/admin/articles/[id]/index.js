@@ -32,7 +32,7 @@ export async function onRequestPatch(context) {
     const action = nextStatus === 'review' ? 'request_publication' : nextStatus === 'published' ? (auth.user.role === 'admin' ? 'edit_publish' : 'direct_publish') : 'update';
     await audit(context.env, auth.user.id, action, 'article', id, { title: data.title });
     return json({ success: true, status: nextStatus });
-  } catch {
+  } catch (error) {
     return json({ message: String(error.message).includes('UNIQUE') ? '이미 사용 중인 기사 주소입니다.' : '기사를 수정하지 못했습니다.' }, String(error.message).includes('UNIQUE') ? 409 : 500);
   }
 }
