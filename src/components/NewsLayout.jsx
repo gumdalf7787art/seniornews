@@ -24,7 +24,7 @@ export default function NewsLayout({ user }) {
   const [categoryPinned, setCategoryPinned] = useState(false);
   const mobilePanelRef = useRef(null);
   const mobilePanelOpenerRef = useRef(null);
-  const categorySentinelRef = useRef(null);
+  const categoryNavShellRef = useRef(null);
 
   useEffect(() => {
     document.body.classList.toggle('large-text', largeText);
@@ -107,13 +107,27 @@ export default function NewsLayout({ user }) {
   useEffect(() => setMobilePanel(''), [location.pathname]);
 
   useEffect(() => {
-    const sentinel = categorySentinelRef.current;
-    if (!sentinel || !window.IntersectionObserver) return undefined;
-    const observer = new IntersectionObserver(([entry]) => {
-      setCategoryPinned(!entry.isIntersecting);
-    }, { threshold: 0 });
-    observer.observe(sentinel);
-    return () => observer.disconnect();
+    const shell = categoryNavShellRef.current;
+    if (!shell) return undefined;
+
+    let frame = 0;
+    const updatePinnedState = () => {
+      frame = 0;
+      const nextPinned = shell.getBoundingClientRect().top <= 0;
+      setCategoryPinned((current) => (current === nextPinned ? current : nextPinned));
+    };
+    const onScrollOrResize = () => {
+      if (!frame) frame = window.requestAnimationFrame(updatePinnedState);
+    };
+
+    updatePinnedState();
+    window.addEventListener('scroll', onScrollOrResize, { passive: true });
+    window.addEventListener('resize', onScrollOrResize);
+    return () => {
+      window.removeEventListener('scroll', onScrollOrResize);
+      window.removeEventListener('resize', onScrollOrResize);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   const isWorkRoute = ['/admin', '/creator'].includes(location.pathname);
@@ -131,7 +145,7 @@ export default function NewsLayout({ user }) {
           </div>
         </div>
       </div>
-      <header className={`site-header brand-refresh-header ${categoryPinned ? 'category-is-pinned' : ''}`}>
+      <header className="site-header brand-refresh-header">
         <div className="brand-refresh-masthead">
           <div className="brand-refresh-tools">
             <form className="brand-refresh-search" role="search" onSubmit={search}>
@@ -177,7 +191,7 @@ export default function NewsLayout({ user }) {
           <Link className="header-account" to={user ? '/mypage' : '/login'}><UserRound size={20} /><span>{user ? user.name : '로그인'}</span></Link>
           <button type="button" className="mobile-view-settings" onClick={(event) => openMobilePanel('settings', event)} aria-label="보기 설정 열기"><SlidersHorizontal size={22} /></button>
         </div>
-        <div ref={categorySentinelRef} className="category-sticky-sentinel" aria-hidden="true" />
+        <div ref={categoryNavShellRef} className="category-nav-shell">
         <nav className={`category-nav ${categoryPinned ? 'is-pinned' : ''}`} aria-label="뉴스 카테고리">
           <div className="category-inner">
             <Link className="category-sticky-wordmark" to="/" tabIndex={categoryPinned ? 0 : -1}>
@@ -194,6 +208,7 @@ export default function NewsLayout({ user }) {
             </Link>
           </div>
         </nav>
+        </div>
       </header>
       <main id="main-content"><Outlet /></main>
       <footer className="site-footer">
