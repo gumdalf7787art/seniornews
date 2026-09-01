@@ -121,7 +121,7 @@ img { max-width: 100%; display: block; }
 .brand-refresh-header .category-nav.is-pinned .category-sticky-wordmark { gap: 1px; padding-left: 4px; text-decoration: none; }
 .category-sticky-wordmark strong { background: linear-gradient(100deg, #8ec2ff, #a5a8ff 52%, #d1a6ff); -webkit-background-clip: text; background-clip: text; color: transparent; font-size: 17px; font-weight: 900; letter-spacing: -.07em; line-height: 1.15; }
 .category-sticky-wordmark span { color: #b8c8ff; font-family: Arial, sans-serif; font-size: 8px; font-weight: 700; letter-spacing: .2em; line-height: 1.2; }
-.brand-refresh-header .category-nav.is-pinned .category-sticky-lab { justify-self: end; min-width: 168px; margin: 7px 0; padding: 5px 12px; border: 1px solid rgba(189, 202, 255, .55); border-radius: 8px; color: #f0f4ff; background: rgba(255,255,255,.07); text-align: center; }
+.brand-refresh-header .category-nav.is-pinned .category-sticky-lab { justify-self: end; box-sizing: border-box; min-width: 143px; min-height: 50px; margin: 4px 0; padding: 4px 10px; border: 1px solid rgba(189, 202, 255, .55); border-radius: 8px; color: #f0f4ff; background: rgba(255,255,255,.07); text-align: center; }
 .category-sticky-lab:hover { border-color: #bdb4ff; background: rgba(168,135,255,.16); }
 .category-sticky-lab strong { font-size: 14px; letter-spacing: -.055em; line-height: 1.15; }
 .category-sticky-lab span { color: #bdcaff; font-family: Arial, sans-serif; font-size: 9px; letter-spacing: .1em; line-height: 1.15; }
