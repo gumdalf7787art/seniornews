@@ -216,10 +216,11 @@ export default function NewsLayout({ user }) {
       <footer className="site-footer">
         <div className="container footer-grid" style={{ paddingBlock: 0 }}>
           <div>
-            <div className="brand">
-              <span className="brand-mark">시</span>
-              <strong style={{ color: 'white' }}>시니어 라이프 뉴스</strong>
-            </div>
+            <Link className="footer-brand-logo" to="/" aria-label="시니어 라이프 뉴스 홈">
+              <strong>시니어 라이프 뉴스</strong>
+              <span>SENIOR LIFE NEWS</span>
+              <i aria-hidden="true" />
+            </Link>
             <p className="footer-note">시니어의 삶에 필요한 뉴스를 정확하고 이해하기 쉽게 전하겠습니다.</p>
           </div>
           <div>
