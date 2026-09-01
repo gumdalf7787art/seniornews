@@ -7,11 +7,28 @@ import { categoryName } from '../data/articles';
 import { fetchPublishedArticles, normalizeArticle } from '../utils/publicArticles';
 import { saveRecentArticle } from '../utils/readerPreferences';
 
+function safeInlineHtml(value = '') {
+  if (typeof document === 'undefined') return '';
+  const container = document.createElement('div');
+  container.innerHTML = value;
+  container.querySelectorAll('*').forEach((element) => {
+    if (!['STRONG', 'B', 'BR'].includes(element.tagName)) element.replaceWith(...element.childNodes);
+    else [...element.attributes].forEach((attribute) => element.removeAttribute(attribute.name));
+  });
+  return container.innerHTML;
+}
+
 function BodyBlock({ block }) {
-  if (block.type === 'heading') return <h2>{block.text}</h2>;
-  if (block.type === 'quote') return <blockquote>{block.text}</blockquote>;
-  if (block.type === 'image') return block.url ? <figure><img src={block.url} alt={block.alt || ''} />{block.caption && <figcaption>{block.caption}</figcaption>}</figure> : null;
-  return <p>{block.text}</p>;
+  const html = safeInlineHtml(block.html || block.text || '');
+  if (block.type === 'heading' || block.type === 'sectionTitle') return <h3 className={`article-section-title article-section-title-${block.attrs?.variant || block.variant || 'bar'}`} dangerouslySetInnerHTML={{ __html: html }} />;
+  if (block.type === 'quote') return <blockquote dangerouslySetInnerHTML={{ __html: html }} />;
+  if (block.type === 'image') {
+    const url = block.url || block.attrs?.src;
+    const alt = block.alt || block.attrs?.alt || '';
+    const caption = block.caption || block.attrs?.caption || '';
+    return url ? <figure><img src={url} alt={alt} />{caption && <figcaption>{caption}</figcaption>}</figure> : null;
+  }
+  return <p dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 export default function ArticlePage({ user }) {

@@ -30,6 +30,28 @@ const emptyForm = {
   image_alt: "",
   source_text: "",
 };
+const MAX_SOURCE_IMAGE_BYTES = 10 * 1024 * 1024;
+const MAX_OPTIMIZED_IMAGE_BYTES = 4.5 * 1024 * 1024;
+
+async function optimizeImageForWeb(file) {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, 2200 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  const context = canvas.getContext("2d");
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  let quality = 0.86;
+  let blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", quality));
+  while (blob && blob.size > MAX_OPTIMIZED_IMAGE_BYTES && quality > 0.5) {
+    quality -= 0.08;
+    blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", quality));
+  }
+  if (!blob || blob.size > MAX_OPTIMIZED_IMAGE_BYTES) throw new Error("이미지를 웹용 크기로 최적화하지 못했습니다.");
+  const fileName = `${file.name.replace(/\.[^.]+$/, "") || "article-image"}.webp`;
+  return new File([blob], fileName, { type: "image/webp" });
+}
 const statusLabel = {
   draft: "작성 중",
   review: "발행 요청",
@@ -55,7 +77,7 @@ export default function AdminPage({ user }) {
   const [pendingImage, setPendingImage] = useState(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
   const [imageUploadStatus, setImageUploadStatus] = useState("");
-  const [uploadingBlockId, setUploadingBlockId] = useState(null);
+  const [inlineImageUploads, setInlineImageUploads] = useState(0);
 
   const isCreator = user.role === "admin";
   const displayRole = isCreator ? "관리자" : "기자";
@@ -152,7 +174,7 @@ export default function AdminPage({ user }) {
   };
 
   const save = async (status) => {
-    if (uploading || uploadingBlockId) {
+    if (uploading || inlineImageUploads) {
       setMessage("이미지 업로드가 끝난 뒤 저장 또는 발행해 주세요.");
       return;
     }
@@ -176,14 +198,6 @@ export default function AdminPage({ user }) {
     }
     if ((payload.image_url || pendingImage) && !payload.image_alt.trim()) {
       setMessage("대표 이미지를 사용하려면 이미지 설명을 입력해 주세요.");
-      return;
-    }
-    if (
-      form.blocks.some(
-        (block) => block.type === "image" && block.url && !block.alt.trim(),
-      )
-    ) {
-      setMessage("본문 이미지를 사용하려면 각 이미지의 설명을 입력해 주세요.");
       return;
     }
     if (
@@ -360,24 +374,19 @@ export default function AdminPage({ user }) {
       event.target.value = "";
       return;
     }
+    if (file.size > MAX_SOURCE_IMAGE_BYTES) {
+      const notice = "첨부할 수 없는 이미지입니다. 사진 파일은 10MB 이하만 첨부할 수 있습니다. 사진 크기를 줄인 뒤 다시 선택해 주세요.";
+      setMessage(notice);
+      window.alert(notice);
+      event.target.value = "";
+      return;
+    }
     if (imagePreviewUrl.startsWith("blob:")) URL.revokeObjectURL(imagePreviewUrl);
     const previewUrl = URL.createObjectURL(file);
     setImagePreviewUrl(previewUrl);
     setImageUploadStatus("파일 준비 중");
     try {
-      let prepared = file;
-      if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
-        const bitmap = await createImageBitmap(file);
-        const scale = Math.min(1, 2200 / Math.max(bitmap.width, bitmap.height));
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.round(bitmap.width * scale);
-        canvas.height = Math.round(bitmap.height * scale);
-        canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-        const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.84));
-        bitmap.close();
-        if (!blob || blob.size > 5 * 1024 * 1024) throw new Error("이미지 용량을 줄이지 못했습니다.");
-        prepared = new File([blob], `${file.name.replace(/\.[^.]+$/, "") || "article-image"}.jpg`, { type: "image/jpeg" });
-      }
+      const prepared = await optimizeImageForWeb(file);
       setPendingImage(prepared);
       setForm((current) => ({ ...current, image_url: "" }));
       setImageUploadStatus("첨부 완료 · 저장 대기");
@@ -392,15 +401,16 @@ export default function AdminPage({ user }) {
     event.target.value = "";
   };
 
-  const uploadInlineImage = async (block, event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("alt", block.alt.trim() || "본문 이미지 설명 미입력");
-    setUploadingBlockId(block.id);
-    setMessage("본문 이미지를 업로드하는 중입니다.");
+  const uploadInlineImage = async (file, alt = "기사 본문 이미지") => {
+    if (!file) throw new Error("이미지 파일을 선택해 주세요.");
+    if (file.size > MAX_SOURCE_IMAGE_BYTES) throw new Error("사진 파일은 10MB 이하만 첨부할 수 있습니다.");
+    setInlineImageUploads((count) => count + 1);
+    setMessage("본문 이미지를 웹용으로 최적화하고 업로드하는 중입니다.");
     try {
+      const prepared = await optimizeImageForWeb(file);
+      const formData = new FormData();
+      formData.append("file", prepared);
+      formData.append("alt", alt || "기사 본문 이미지");
       const response = await fetch("/api/admin/media", {
         method: "POST",
         credentials: "include",
@@ -408,21 +418,11 @@ export default function AdminPage({ user }) {
         body: formData,
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message);
-      setForm((current) => ({
-        ...current,
-        blocks: current.blocks.map((item) =>
-          item.id === block.id ? { ...item, url: data.url } : item,
-        ),
-      }));
-      setMessage(
-        "본문 이미지 첨부가 완료되었습니다. 이미지 설명을 입력한 뒤 저장해 주세요.",
-      );
-    } catch (error) {
-      setMessage(error.message || "본문 이미지를 업로드하지 못했습니다.");
+      if (!response.ok || !data.url) throw new Error(data.message || "본문 이미지를 업로드하지 못했습니다.");
+      setMessage("본문 이미지 첨부가 완료되었습니다.");
+      return data;
     } finally {
-      setUploadingBlockId(null);
-      event.target.value = "";
+      setInlineImageUploads((count) => Math.max(0, count - 1));
     }
   };
 
@@ -765,7 +765,6 @@ export default function AdminPage({ user }) {
                   setForm((current) => ({ ...current, blocks }))
                 }
                 onUploadImage={uploadInlineImage}
-                uploadingBlockId={uploadingBlockId}
               />
             </div>
             <div className="editor-submit-actions">

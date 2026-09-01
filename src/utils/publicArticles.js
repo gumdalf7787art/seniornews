@@ -5,6 +5,7 @@ function parseBlocks(value, fallbackText = '') {
   try {
     const parsed = JSON.parse(value || '[]');
     if (Array.isArray(parsed)) return parsed;
+    if (Array.isArray(parsed?.content)) return parsed.content;
   } catch {
     // Older articles can contain plain text only.
   }
