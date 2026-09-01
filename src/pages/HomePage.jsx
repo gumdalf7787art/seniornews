@@ -4,12 +4,14 @@ import { ArrowRight, LoaderCircle } from 'lucide-react';
 import ArticleCard from '../components/ArticleCard';
 import CategoryNewsBlock from '../components/CategoryNewsBlock';
 import HeroAdBanner from '../components/HeroAdBanner';
+import SeniorBriefingBar from '../components/SeniorBriefingBar';
 import { categories, categoryName } from '../data/articles';
 import { fetchPublishedArticles } from '../utils/publicArticles';
 
 export default function HomePage() {
   const [articles, setArticles] = useState([]);
   const [banners, setBanners] = useState([]);
+  const [briefings, setBriefings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -21,10 +23,16 @@ export default function HomePage() {
         const data = await response.json();
         return data.banners || [];
       }).catch(() => []),
+      fetch('/api/briefings').then(async (response) => {
+        if (!response.ok) throw new Error('오늘의 알림을 불러오지 못했습니다.');
+        const data = await response.json();
+        return data.briefings || [];
+      }).catch(() => []),
     ])
-      .then(([publishedArticles, activeBanners]) => {
+      .then(([publishedArticles, activeBanners, activeBriefings]) => {
         setArticles(publishedArticles);
         setBanners(activeBanners);
+        setBriefings(activeBriefings);
       })
       .catch((requestError) => setError(requestError.message || '기사를 불러오지 못했습니다.'))
       .finally(() => setLoading(false));
@@ -62,6 +70,8 @@ export default function HomePage() {
         <div className="section-heading"><h2 id="latest-heading">최신 뉴스</h2><Link to="/search">전체 뉴스 <ArrowRight size={17} style={{ display: 'inline' }} /></Link></div>
         <div className="news-grid">{latest.map((article) => <ArticleCard key={article.id} article={article} />)}</div>
       </section>
+
+      <SeniorBriefingBar briefings={briefings} />
 
       <div className="category-sections">
         {categories.slice(0, 4).map((category) => <CategoryNewsBlock key={category.slug} category={category} articles={articles.filter((article) => article.category === category.slug).slice(0, 5)} />)}

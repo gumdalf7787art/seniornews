@@ -63,6 +63,18 @@ CREATE TABLE IF NOT EXISTS banners (
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS senior_briefings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  category TEXT NOT NULL DEFAULT '생활',
+  message TEXT NOT NULL,
+  target_url TEXT NOT NULL,
+  display_order INTEGER NOT NULL DEFAULT 0,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  starts_at TEXT,
+  ends_at TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 CREATE TABLE IF NOT EXISTS audit_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER REFERENCES users(id), action TEXT NOT NULL, entity_type TEXT NOT NULL, entity_id TEXT, details TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS login_attempts (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL, ip_hash TEXT, succeeded INTEGER NOT NULL DEFAULT 0, attempted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS email_tokens (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, purpose TEXT NOT NULL CHECK(purpose IN ('verify','reset')), token_hash TEXT NOT NULL UNIQUE, expires_at TEXT NOT NULL, used_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
@@ -71,6 +83,7 @@ CREATE INDEX IF NOT EXISTS idx_articles_public ON articles(status, published_at 
 CREATE INDEX IF NOT EXISTS idx_articles_category ON articles(category_id, status, published_at DESC);
 CREATE INDEX IF NOT EXISTS idx_article_views_article ON article_views(article_id, viewed_at);
 CREATE INDEX IF NOT EXISTS idx_banners_active ON banners(is_active, display_order);
+CREATE INDEX IF NOT EXISTS idx_senior_briefings_active ON senior_briefings(is_active, display_order);
 CREATE INDEX IF NOT EXISTS idx_login_attempts_email ON login_attempts(email, attempted_at);
 
 INSERT OR IGNORE INTO categories(name, slug, display_order) VALUES

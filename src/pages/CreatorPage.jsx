@@ -49,37 +49,44 @@ export default function CreatorPage({ user }) {
   const [members, setMembers] = useState([]);
   const [categories, setCategories] = useState([]);
   const [banners, setBanners] = useState([]);
+  const [briefings, setBriefings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [newCategory, setNewCategory] = useState({ name: "", slug: "" });
   const [bannerForm, setBannerForm] = useState({ name: "", image_url: "", image_alt: "", target_url: "", display_order: 0, is_active: true, starts_at: "", ends_at: "" });
   const [editingBannerId, setEditingBannerId] = useState(null);
   const [bannerUploading, setBannerUploading] = useState(false);
+  const [briefingForm, setBriefingForm] = useState({ category: "복지", message: "", target_url: "", display_order: 0, is_active: true, starts_at: "", ends_at: "" });
+  const [editingBriefingId, setEditingBriefingId] = useState(null);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [dashboardResponse, memberResponse, categoryResponse, bannerResponse] =
+      const [dashboardResponse, memberResponse, categoryResponse, bannerResponse, briefingResponse] =
         await Promise.all([
           fetch("/api/admin/dashboard", { credentials: "include" }),
           fetch("/api/admin/users", { credentials: "include" }),
           fetch("/api/admin/categories", { credentials: "include" }),
           fetch("/api/admin/banners", { credentials: "include" }),
+          fetch("/api/admin/briefings", { credentials: "include" }),
         ]);
-      const [dashboardData, memberData, categoryData, bannerData] = await Promise.all([
+      const [dashboardData, memberData, categoryData, bannerData, briefingData] = await Promise.all([
         dashboardResponse.json(),
         memberResponse.json(),
         categoryResponse.json(),
         bannerResponse.json(),
+        briefingResponse.json(),
       ]);
       if (!dashboardResponse.ok) throw new Error(dashboardData.message);
       if (!memberResponse.ok) throw new Error(memberData.message);
       if (!categoryResponse.ok) throw new Error(categoryData.message);
       if (!bannerResponse.ok) throw new Error(bannerData.message);
+      if (!briefingResponse.ok) throw new Error(briefingData.message);
       setDashboard(dashboardData);
       setMembers(memberData.users || []);
       setCategories(categoryData.categories || []);
       setBanners(bannerData.banners || []);
+      setBriefings(briefingData.briefings || []);
     } catch (error) {
       setMessage(error.message || "관리자 관리 정보를 불러오지 못했습니다.");
     } finally {
@@ -282,12 +289,46 @@ export default function CreatorPage({ user }) {
     }
   };
 
+  const resetBriefingForm = () => {
+    setEditingBriefingId(null);
+    setBriefingForm({ category: "복지", message: "", target_url: "", display_order: 0, is_active: true, starts_at: "", ends_at: "" });
+  };
+
+  const saveBriefing = async (event) => {
+    event.preventDefault();
+    try {
+      const response = await fetch(editingBriefingId ? `/api/admin/briefings/${editingBriefingId}` : "/api/admin/briefings", { method: editingBriefingId ? "PATCH" : "POST", credentials: "include", headers: { "Content-Type": "application/json", "X-Requested-With": "SeniorNews" }, body: JSON.stringify(briefingForm) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "오늘의 알림을 저장하지 못했습니다.");
+      setMessage(editingBriefingId ? "오늘의 알림을 수정했습니다." : "오늘의 알림을 등록했습니다.");
+      resetBriefingForm();
+      await loadData();
+    } catch (error) {
+      setMessage(error.message || "오늘의 알림을 저장하지 못했습니다.");
+    }
+  };
+
+  const deleteBriefing = async (briefing) => {
+    if (!window.confirm("이 알림을 삭제할까요?")) return;
+    try {
+      const response = await fetch(`/api/admin/briefings/${briefing.id}`, { method: "DELETE", credentials: "include", headers: { "X-Requested-With": "SeniorNews" } });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "오늘의 알림을 삭제하지 못했습니다.");
+      setMessage("오늘의 알림을 삭제했습니다.");
+      if (Number(editingBriefingId) === Number(briefing.id)) resetBriefingForm();
+      await loadData();
+    } catch (error) {
+      setMessage(error.message || "오늘의 알림을 삭제하지 못했습니다.");
+    }
+  };
+
   const navItems = [
     { id: "overview", label: "운영 현황", icon: LayoutDashboard },
     { id: "review", label: "발행 요청", icon: CheckCircle2 },
     { id: "members", label: "회원·권한", icon: UsersRound },
     { id: "categories", label: "카테고리", icon: FolderCog },
     { id: "banners", label: "광고 배너", icon: Megaphone },
+    { id: "briefings", label: "오늘의 알림", icon: Megaphone },
   ];
 
   return (
@@ -653,6 +694,27 @@ export default function CreatorPage({ user }) {
                     <div className="banner-list-actions"><button className="secondary-button" onClick={() => editBanner(banner)}>수정</button><button className="danger-button" onClick={() => deleteBanner(banner)}><Trash2 size={17} />삭제</button></div>
                   </article>
                 )) : <p className="muted-copy">등록된 광고 배너가 없습니다. 배너를 등록하면 홈 주요 뉴스 우측에 노출됩니다.</p>}
+              </div>
+            </section>
+          )}
+          {tab === "briefings" && (
+            <section className="panel briefing-admin-panel">
+              <div className="panel-heading"><div><h2>오늘의 시니어 알림 관리</h2><p>최신 뉴스 아래에 노출되는 생활·복지 핵심 알림을 관리합니다.</p></div></div>
+              <form className="briefing-editor-form" onSubmit={saveBriefing}>
+                <h3>{editingBriefingId ? "알림 수정" : "새 알림 등록"}</h3>
+                <div className="briefing-form-grid">
+                  <label>분류<input value={briefingForm.category} onChange={(event) => setBriefingForm((current) => ({ ...current, category: event.target.value }))} placeholder="예: 복지" maxLength={20} required /></label>
+                  <label>노출 순서<input type="number" min="0" value={briefingForm.display_order} onChange={(event) => setBriefingForm((current) => ({ ...current, display_order: event.target.value }))} /></label>
+                  <label className="briefing-wide">알림 문구<input value={briefingForm.message} onChange={(event) => setBriefingForm((current) => ({ ...current, message: event.target.value }))} placeholder="독자가 바로 행동할 수 있는 짧은 문구를 입력하세요" maxLength={120} required /></label>
+                  <label className="briefing-wide">연결 주소<input value={briefingForm.target_url} onChange={(event) => setBriefingForm((current) => ({ ...current, target_url: event.target.value }))} placeholder="내부 기사 주소 또는 https:// 공식 안내 주소" required /></label>
+                  <label>노출 시작일<input type="datetime-local" value={briefingForm.starts_at} onChange={(event) => setBriefingForm((current) => ({ ...current, starts_at: event.target.value }))} /></label>
+                  <label>노출 종료일<input type="datetime-local" value={briefingForm.ends_at} onChange={(event) => setBriefingForm((current) => ({ ...current, ends_at: event.target.value }))} /></label>
+                </div>
+                <label className="banner-active"><input type="checkbox" checked={briefingForm.is_active} onChange={(event) => setBriefingForm((current) => ({ ...current, is_active: event.target.checked }))} /> 즉시 노출</label>
+                <div className="banner-form-actions"><button className="primary-button">{editingBriefingId ? "알림 수정" : "알림 등록"}</button>{editingBriefingId && <button type="button" className="secondary-button" onClick={resetBriefingForm}>등록 취소</button>}</div>
+              </form>
+              <div className="briefing-admin-list">
+                {briefings.length ? briefings.map((briefing) => <article key={briefing.id}><span>{briefing.category}</span><div><strong>{briefing.message}</strong><small>{briefing.target_url} · 순서 {briefing.display_order} · {briefing.is_active ? "노출 중" : "비공개"}</small></div><div className="banner-list-actions"><button className="secondary-button" onClick={() => { setEditingBriefingId(briefing.id); setBriefingForm({ ...briefing, is_active: Boolean(briefing.is_active), starts_at: briefing.starts_at || "", ends_at: briefing.ends_at || "" }); }}>수정</button><button className="danger-button" onClick={() => deleteBriefing(briefing)}><Trash2 size={17} />삭제</button></div></article>) : <p className="muted-copy">등록된 알림이 없습니다. 생활·복지 핵심 정보를 짧게 등록해 보세요.</p>}
               </div>
             </section>
           )}
