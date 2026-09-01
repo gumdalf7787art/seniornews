@@ -54,7 +54,11 @@ function ResearchCard({ item }) {
 
 function LabHome() {
   return <>
-    <section className="lab-hero"><div className="lab-hero-copy"><p className="lab-kicker">MEDIPROPER · RESEARCH CENTER</p><h1>시니어 라이프 연구소</h1><LabMark /><p className="lab-mission">건강한 삶의 후반전을 연구합니다.</p><p className="lab-intro">시니어의 건강, 자립, 경제, 관계, 디지털 삶을 살피고 더 나은 일상을 위한 실질적인 해법을 제안합니다.</p><div className="lab-hero-actions"><Link className="primary-button" to="/lab/research">최신 연구 보기 <ArrowRight size={18} /></Link><Link className="lab-ghost-button" to="/lab/about">연구소 소개</Link></div></div><aside className="lab-hero-note"><strong>Senior Life Lab</strong><p>시니어의 삶을 더 깊이 이해하고, 사회에 필요한 변화를 함께 만듭니다.</p><span>운영 법인 · (주)메디프라퍼</span></aside></section>
+    <section className="lab-hero">
+      <div className="lab-hero-wave lab-hero-wave-left" aria-hidden="true">{Array.from({ length: 6 }, (_, index) => <i key={index} />)}</div>
+      <div className="lab-hero-wave lab-hero-wave-right" aria-hidden="true">{Array.from({ length: 6 }, (_, index) => <i key={index} />)}</div>
+      <div className="lab-hero-copy"><p className="lab-kicker">MEDIPROPER · RESEARCH CENTER</p><h1>시니어 라이프 연구소</h1><LabMark /><p className="lab-mission">건강한 삶의 후반전을 연구합니다.</p><p className="lab-intro">시니어의 건강, 자립, 경제, 관계, 디지털 삶을 살피고 더 나은 일상을 위한 실질적인 해법을 제안합니다.</p><div className="lab-hero-actions"><Link className="primary-button" to="/lab/research">최신 연구 보기 <ArrowRight size={18} /></Link><Link className="lab-ghost-button" to="/lab/about">연구소 소개</Link></div></div><aside className="lab-hero-note"><strong>Senior Life Lab</strong><p>시니어의 삶을 더 깊이 이해하고, 사회에 필요한 변화를 함께 만듭니다.</p><span>운영 법인 · (주)메디프라퍼</span></aside>
+    </section>
 
     <section className="lab-section"><div className="lab-section-heading"><div><p className="lab-kicker">OUR FOCUS</p><h2>우리가 연구하는 삶의 장면</h2></div><p>연구소는 시니어의 삶을 하나의 문제로 보지 않고, 서로 연결된 일상의 조건으로 바라봅니다.</p></div><div className="lab-theme-grid">{themes.map(({ icon: Icon, title, description }) => <article key={title}><Icon aria-hidden="true" size={29} /><h3>{title}</h3><p>{description}</p></article>)}</div></section>
 
