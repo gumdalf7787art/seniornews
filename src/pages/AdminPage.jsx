@@ -648,33 +648,20 @@ export default function AdminPage({ user }) {
                 placeholder="독자가 바로 이해할 수 있는 제목을 입력하세요"
               />
             </div>
-            <div className="editor-form-grid">
-              <div className="field">
-                <label htmlFor="category">카테고리</label>
-                <select
-                  id="category"
-                  name="category"
-                  value={form.category}
-                  onChange={update}
-                >
-                  {categories.map((category) => (
-                    <option value={category.slug} key={category.slug}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="slug">기사 주소</label>
-                <input
-                  id="slug"
-                  name="slug"
-                  value={form.slug}
-                  onChange={update}
-                  pattern="[a-z0-9-]+"
-                  placeholder="영문·숫자·하이픈 (비우면 자동 생성)"
-                />
-              </div>
+            <div className="field">
+              <label htmlFor="category">카테고리</label>
+              <select
+                id="category"
+                name="category"
+                value={form.category}
+                onChange={update}
+              >
+                {categories.map((category) => (
+                  <option value={category.slug} key={category.slug}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="field">
               <label htmlFor="summary">기사 한눈에 보기</label>
@@ -784,6 +771,15 @@ export default function AdminPage({ user }) {
               >
                 <Send size={18} />
                 발행 요청
+              </button>
+              <button
+                className="primary-button direct-publish-button"
+                type="button"
+                disabled={saving}
+                onClick={() => save("published")}
+              >
+                <CheckCircle2 size={18} />
+                직접 발행
               </button>
             </div>
           </form>

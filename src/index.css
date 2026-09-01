@@ -282,6 +282,8 @@ main { flex: 1; }
 .editor-notice-dialog { text-align: center; }
 .editor-notice-dialog .primary-button { justify-self: center; min-width: 110px; }
 .editor-submit-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 25px; }
+.direct-publish-button { background: #d95d1d; }
+.direct-publish-button:hover { background: #b9470d; }
 .editor-guide { position: sticky; top: 170px; display: grid; gap: 18px; }
 .editor-guide > div { padding: 21px; border-top: 4px solid var(--green-900); background: #fff; }
 .editor-guide > div + div { border-top-color: var(--orange); }
