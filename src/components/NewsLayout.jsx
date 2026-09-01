@@ -121,14 +121,34 @@ export default function NewsLayout({ user }) {
       </div>
       <header className="site-header brand-refresh-header">
         <div className="brand-refresh-masthead">
+          <div className="brand-refresh-tools">
+            <form className="brand-refresh-search" role="search" onSubmit={search}>
+              <label className="sr-only" htmlFor="brand-refresh-search">뉴스 검색</label>
+              <input id="brand-refresh-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="뉴스 검색" />
+              <button type="submit"><Search size={15} /><span>검색</span></button>
+            </form>
+            <div className="brand-refresh-account-links">
+              <button type="button" onClick={toggleLargeText} aria-pressed={largeText} title="글자 크기 전환"><ZoomIn size={15} /></button>
+              <button type="button" onClick={toggleHighContrast} aria-pressed={highContrast} title="고대비 화면 전환"><Contrast size={15} /></button>
+              <Link to={user ? '/mypage' : '/login'}>{user ? user.name : '로그인'}</Link>
+              {!user && <Link className="brand-refresh-signup" to="/signup">회원가입</Link>}
+            </div>
+          </div>
           <div className="brand-refresh-corner-lines brand-refresh-corner-lines-left" aria-hidden="true">
             {Array.from({ length: 7 }, (_, index) => <i key={index} />)}
           </div>
-          <Link className="brand-refresh-wordmark" to="/" aria-label="시니어 라이프 뉴스 홈">
-            <strong>시니어 라이프 뉴스</strong>
-            <span>SENIOR LIFE NEWS</span>
-            <i aria-hidden="true" />
-          </Link>
+          <div className="brand-refresh-masthead-content">
+            <p className="brand-refresh-message">오늘을 더 잘 살고<br />내일을 든든하게 준비하는 뉴스</p>
+            <Link className="brand-refresh-wordmark" to="/" aria-label="시니어 라이프 뉴스 홈">
+              <strong>시니어 라이프 뉴스</strong>
+              <span>SENIOR LIFE NEWS</span>
+              <i aria-hidden="true" />
+            </Link>
+            <Link className="brand-refresh-lab-button" to="/about">
+              <strong>시니어 라이프 연구소</strong>
+              <span>Senior Life Lab</span>
+            </Link>
+          </div>
           <div className="brand-refresh-corner-lines brand-refresh-corner-lines-right" aria-hidden="true">
             {Array.from({ length: 7 }, (_, index) => <i key={index} />)}
           </div>
