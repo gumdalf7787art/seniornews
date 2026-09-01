@@ -4,20 +4,20 @@ const concepts = [
   {
     variant: 'recommended',
     number: '01',
-    title: '추천안 · 차분한 워드마크',
-    description: '가장 읽기 쉽고 오래 써도 질리지 않는 기본형입니다. 웹 헤더, 기사 카드, 명함까지 자연스럽게 확장됩니다.',
+    title: '추천안 · 빛의 흐름 워드마크',
+    description: '가장 읽기 쉽고 오래 써도 질리지 않는 기본형입니다. 밝은 바탕의 홈페이지 헤더에 가장 안정적으로 어울립니다.',
   },
   {
     variant: 'typography',
     number: '02',
     title: '타이포그래픽 · 라이프 강조',
-    description: '“라이프”에 무게를 주어 정보 채널을 넘어 삶을 돕는 뉴스라는 인상을 만듭니다.',
+    description: '“라이프”에 무게를 주어 정보 채널을 넘어 삶을 돕는 뉴스라는 인상을 만듭니다. 제목 자체의 리듬이 살아납니다.',
   },
   {
     variant: 'line',
     number: '03',
-    title: '라인 그래픽 · 정보의 흐름',
-    description: '얇은 선이 정보와 세대를 연결하는 흐름을 표현합니다. 배너와 캠페인 소재에서 특히 돋보입니다.',
+    title: '라인 그래픽 · 확장되는 정보의 흐름',
+    description: '아홉 겹의 곡선 라인이 삶의 흐름과 연결을 표현합니다. 첨부 이미지의 감도를 가장 직접적으로 계승한 시안입니다.',
   },
 ];
 
@@ -27,7 +27,7 @@ export default function BrandPreviewPage() {
       <header className="brand-preview-intro">
         <p className="eyebrow">Brand identity draft</p>
         <h1>시니어 라이프 뉴스 로고 시안</h1>
-        <p>모두 배경이 없는 HTML/CSS 로고입니다. 제목은 라이프 블루에서 잉크 바이올렛으로 이어지며, 흰 헤더와 어두운 홍보 화면에서의 사용 모습을 함께 확인할 수 있습니다.</p>
+        <p>모두 배경이 없는 HTML/CSS 로고입니다. 제목은 라이프 블루에서 잉크 바이올렛으로 이어지고, 부제는 <strong>SENIOR LIFE NEWS</strong>로 통일했습니다. 흰 헤더와 참조 이미지의 군청–바이올렛 분위기를 적용한 어두운 화면에서 함께 확인할 수 있습니다.</p>
       </header>
 
       <section className="brand-preview-grid" aria-label="로고 시안 비교">

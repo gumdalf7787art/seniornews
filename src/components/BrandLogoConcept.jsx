@@ -1,8 +1,12 @@
-const subtitles = {
-  recommended: '오늘을 더 잘 살고, 내일을 든든하게 준비하는 뉴스',
-  typography: '건강 · 복지 · 생활을 잇는 시니어 뉴스 채널',
-  line: '삶의 정보를 차분하고 또렷하게 연결합니다',
-};
+const subtitle = 'SENIOR LIFE NEWS';
+
+function FlowLines() {
+  return (
+    <span className="brand-logo-flow-lines" aria-hidden="true">
+      {Array.from({ length: 9 }, (_, index) => <i key={index} />)}
+    </span>
+  );
+}
 
 export default function BrandLogoConcept({ variant = 'recommended' }) {
   const title = variant === 'typography'
@@ -11,13 +15,12 @@ export default function BrandLogoConcept({ variant = 'recommended' }) {
 
   return (
     <div className={`brand-logo-concept brand-logo-${variant}`}>
-      {variant === 'line' && (
-        <span className="brand-logo-lines" aria-hidden="true">
-          <i /><i /><i />
-        </span>
-      )}
+      {variant === 'line' && <FlowLines />}
       <span className="brand-logo-title">{title}</span>
-      <span className="brand-logo-tagline">{subtitles[variant]}</span>
+      <span className="brand-logo-tagline">{subtitle}</span>
+      {variant === 'recommended' && <span className="brand-logo-rule" aria-hidden="true" />}
+      {variant === 'typography' && <span className="brand-logo-underline" aria-hidden="true" />}
+      {variant === 'line' && <span className="brand-logo-line-caption">LIFE · INSIGHT · NEWS</span>}
     </div>
   );
 }

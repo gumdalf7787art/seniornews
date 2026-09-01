@@ -770,8 +770,26 @@ main { flex: 1; }
 
 .brand-preview-surface.is-dark {
   min-height: 205px;
-  background: linear-gradient(115deg, #0b153e 0%, #101947 48%, #27114d 100%);
+  background:
+    radial-gradient(circle at 92% 12%, rgba(128, 41, 188, .42), transparent 28%),
+    radial-gradient(circle at 8% 96%, rgba(28, 102, 220, .24), transparent 32%),
+    linear-gradient(115deg, #071331 0%, #0c1642 48%, #24104a 100%);
 }
+
+.brand-preview-surface.is-dark::before,
+.brand-preview-surface.is-dark::after {
+  position: absolute;
+  width: 245px;
+  height: 245px;
+  border: 1px solid rgba(104, 140, 255, .48);
+  border-radius: 50%;
+  box-shadow: 10px -10px 0 -9px rgba(114, 158, 255, .45), 20px -20px 0 -19px rgba(121, 116, 237, .43), 30px -30px 0 -29px rgba(152, 98, 239, .36), 40px -40px 0 -39px rgba(173, 87, 244, .32), 50px -50px 0 -49px rgba(186, 85, 238, .26);
+  content: '';
+  pointer-events: none;
+}
+
+.brand-preview-surface.is-dark::before { top: -200px; left: -125px; }
+.brand-preview-surface.is-dark::after { right: -125px; bottom: -205px; transform: rotate(180deg); }
 
 .brand-preview-surface-label {
   position: absolute;
@@ -813,16 +831,18 @@ main { flex: 1; }
   margin-top: 15px;
   color: #4f5a73;
   font-size: clamp(12px, 1.55vw, 16px);
-  font-weight: 600;
-  letter-spacing: -.025em;
+  font-family: Arial, sans-serif;
+  font-size: clamp(11px, 1.3vw, 14px);
+  font-weight: 500;
+  letter-spacing: .28em;
 }
 
-.brand-logo-recommended::after {
+.brand-logo-rule {
+  display: block;
   width: min(100%, 360px);
   height: 2px;
   margin-top: 14px;
   background: linear-gradient(90deg, transparent, #73a8ff, #27114d, transparent);
-  content: '';
 }
 
 .brand-logo-typography .brand-logo-title {
@@ -836,48 +856,61 @@ main { flex: 1; }
 }
 
 .brand-logo-typography .brand-logo-tagline {
-  letter-spacing: .06em;
+  margin-top: 13px;
+}
+
+.brand-logo-underline {
+  display: block;
+  width: min(86%, 440px);
+  height: 1px;
+  margin-top: 15px;
+  background: linear-gradient(90deg, transparent, #73a8ff 15%, #876ef1 52%, #27114d 85%, transparent);
 }
 
 .brand-logo-line {
-  padding-top: 34px;
+  padding-top: 44px;
 }
 
 .brand-logo-line .brand-logo-title {
   font-size: clamp(34px, 4.8vw, 60px);
 }
 
-.brand-logo-lines {
+.brand-logo-flow-lines {
   position: absolute;
-  top: -5px;
+  top: 0;
   left: 50%;
-  display: flex;
-  width: min(100%, 290px);
-  height: 24px;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 7px;
+  width: min(85vw, 470px);
+  height: 42px;
   transform: translateX(-50%);
 }
 
-.brand-logo-lines i {
-  display: block;
-  width: 31%;
-  border-top: 1.5px solid #6d94ff;
-  border-radius: 50%;
-  transform: skewX(-28deg);
+.brand-logo-flow-lines i {
+  position: absolute;
+  top: 0;
+  left: 2%;
+  width: 96%;
+  height: 30px;
+  border-top: 1px solid rgba(91, 143, 255, .85);
+  border-radius: 50% 50% 0 0;
+  transform: skewX(-23deg);
 }
 
-.brand-logo-lines i:nth-child(2) {
-  width: 43%;
-  border-color: #7b6dce;
-  transform: translateY(-6px) skewX(-28deg);
-}
+.brand-logo-flow-lines i:nth-child(1) { top: 0; left: 2%; width: 96%; }
+.brand-logo-flow-lines i:nth-child(2) { top: 3px; left: 5%; width: 90%; border-color: rgba(103, 136, 255, .8); }
+.brand-logo-flow-lines i:nth-child(3) { top: 6px; left: 8%; width: 84%; border-color: rgba(118, 126, 247, .76); }
+.brand-logo-flow-lines i:nth-child(4) { top: 9px; left: 11%; width: 78%; border-color: rgba(133, 114, 241, .7); }
+.brand-logo-flow-lines i:nth-child(5) { top: 12px; left: 14%; width: 72%; border-color: rgba(145, 106, 235, .68); }
+.brand-logo-flow-lines i:nth-child(6) { top: 15px; left: 17%; width: 66%; border-color: rgba(159, 98, 231, .65); }
+.brand-logo-flow-lines i:nth-child(7) { top: 18px; left: 20%; width: 60%; border-color: rgba(174, 91, 231, .6); }
+.brand-logo-flow-lines i:nth-child(8) { top: 21px; left: 23%; width: 54%; border-color: rgba(188, 85, 228, .58); }
+.brand-logo-flow-lines i:nth-child(9) { top: 24px; left: 26%; width: 48%; border-color: rgba(205, 86, 229, .56); }
 
-.brand-logo-lines i:nth-child(3) {
-  width: 28%;
-  border-color: #a378ce;
-  transform: translateY(-13px) skewX(-28deg);
+.brand-logo-line-caption {
+  margin-top: 13px;
+  color: #5d6890;
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  letter-spacing: .18em;
 }
 
 .is-dark .brand-logo-title {
@@ -885,10 +918,18 @@ main { flex: 1; }
 }
 
 .is-dark .brand-logo-tagline { color: #d5ddfa; }
-.is-dark .brand-logo-recommended::after { background-image: linear-gradient(90deg, transparent, #8ec2ff, #d1a6ff, transparent); }
-.is-dark .brand-logo-lines i { border-color: #8ec2ff; }
-.is-dark .brand-logo-lines i:nth-child(2) { border-color: #9ea4ff; }
-.is-dark .brand-logo-lines i:nth-child(3) { border-color: #d1a6ff; }
+.is-dark .brand-logo-rule { background-image: linear-gradient(90deg, transparent, #8ec2ff, #d1a6ff, transparent); }
+.is-dark .brand-logo-underline { background-image: linear-gradient(90deg, transparent, #8ec2ff 15%, #a6a5ff 52%, #d1a6ff 85%, transparent); }
+.is-dark .brand-logo-flow-lines i { border-color: rgba(135, 194, 255, .9); }
+.is-dark .brand-logo-flow-lines i:nth-child(2) { border-color: rgba(138, 176, 255, .87); }
+.is-dark .brand-logo-flow-lines i:nth-child(3) { border-color: rgba(148, 160, 255, .84); }
+.is-dark .brand-logo-flow-lines i:nth-child(4) { border-color: rgba(160, 146, 255, .81); }
+.is-dark .brand-logo-flow-lines i:nth-child(5) { border-color: rgba(174, 133, 255, .78); }
+.is-dark .brand-logo-flow-lines i:nth-child(6) { border-color: rgba(190, 123, 255, .75); }
+.is-dark .brand-logo-flow-lines i:nth-child(7) { border-color: rgba(207, 119, 255, .72); }
+.is-dark .brand-logo-flow-lines i:nth-child(8) { border-color: rgba(221, 119, 255, .69); }
+.is-dark .brand-logo-flow-lines i:nth-child(9) { border-color: rgba(235, 125, 255, .66); }
+.is-dark .brand-logo-line-caption { color: #d1d9ff; }
 
 .brand-preview-note {
   display: flex;
@@ -916,7 +957,8 @@ main { flex: 1; }
   .brand-logo-title { font-size: clamp(29px, 9vw, 43px); white-space: normal; }
   .brand-logo-typography .brand-logo-title { font-size: clamp(30px, 9.2vw, 44px); }
   .brand-logo-line .brand-logo-title { font-size: clamp(28px, 8.5vw, 40px); }
-  .brand-logo-tagline { max-width: 270px; margin-top: 11px; line-height: 1.45; }
+  .brand-logo-tagline { max-width: 270px; margin-top: 11px; line-height: 1.45; letter-spacing: .2em; }
+  .brand-logo-flow-lines { width: min(92vw, 360px); }
   .brand-preview-note { display: grid; gap: 8px; padding: 18px; }
 }
 
