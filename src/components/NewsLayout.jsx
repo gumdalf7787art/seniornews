@@ -119,7 +119,20 @@ export default function NewsLayout({ user }) {
           </div>
         </div>
       </div>
-      <header className="site-header">
+      <header className="site-header brand-refresh-header">
+        <div className="brand-refresh-masthead">
+          <div className="brand-refresh-corner-lines brand-refresh-corner-lines-left" aria-hidden="true">
+            {Array.from({ length: 7 }, (_, index) => <i key={index} />)}
+          </div>
+          <Link className="brand-refresh-wordmark" to="/" aria-label="시니어 라이프 뉴스 홈">
+            <strong>시니어 라이프 뉴스</strong>
+            <span>SENIOR LIFE NEWS</span>
+            <i aria-hidden="true" />
+          </Link>
+          <div className="brand-refresh-corner-lines brand-refresh-corner-lines-right" aria-hidden="true">
+            {Array.from({ length: 7 }, (_, index) => <i key={index} />)}
+          </div>
+        </div>
         <div className="header-inner">
           <Link className="brand" to="/" aria-label="시니어 라이프 뉴스 홈">
             <span className="brand-mark" aria-hidden="true">시</span><strong>시니어 라이프 뉴스</strong>
