@@ -67,7 +67,9 @@ function statusClass(status) {
 export default function AdminPage({ user }) {
   const [items, setItems] = useState([]);
   const [view, setView] = useState("dashboard");
+  const tabsRef = useRef(null);
   const [filter, setFilter] = useState("all");
+  const [visibleCount, setVisibleCount] = useState(20);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [message, setMessage] = useState("");
@@ -84,6 +86,14 @@ export default function AdminPage({ user }) {
   const summaryRef = useRef(null);
   const imageSectionRef = useRef(null);
   const bodySectionRef = useRef(null);
+
+  useEffect(() => {
+    tabsRef.current?.querySelector('.active')?.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }, [view]);
+
+  useEffect(() => {
+    setVisibleCount(20);
+  }, [filter, view]);
 
   const isCreator = user.role === "admin";
   const displayRole = isCreator ? "관리자" : "기자";
@@ -505,7 +515,7 @@ export default function AdminPage({ user }) {
         </div>
       )}
 
-      <nav className="admin-tabs" aria-label="기사 관리 메뉴">
+      <nav ref={tabsRef} className="admin-tabs" aria-label="기사 관리 메뉴">
         <button
           className={view === "dashboard" ? "active" : ""}
           onClick={() => setView("dashboard")}
@@ -578,7 +588,7 @@ export default function AdminPage({ user }) {
               </p>
             ) : filteredItems.length ? (
               <div className="editor-article-list">
-                {filteredItems.map((article) => (
+                {filteredItems.slice(0, visibleCount).map((article) => (
                   <article key={article.id} className="editor-article-row">
                     <div className="editor-article-copy">
                       <div>
@@ -649,6 +659,15 @@ export default function AdminPage({ user }) {
                     </div>
                   </article>
                 ))}
+                {filteredItems.length > visibleCount && (
+                  <button
+                    type="button"
+                    className="mobile-load-more"
+                    onClick={() => setVisibleCount((count) => count + 20)}
+                  >
+                    기사 더 보기
+                  </button>
+                )}
               </div>
             ) : (
               <div className="empty-state">

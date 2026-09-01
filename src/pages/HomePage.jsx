@@ -53,7 +53,7 @@ export default function HomePage() {
         <div className="section-heading"><h2 id="today-heading">오늘의 주요 뉴스</h2><span className="eyebrow">{lead.publishedAt?.slice(0, 10)}</span></div>
         <div className="lead-grid">
           <article className="lead-main">
-            <Link to={`/article/${lead.slug}`}>{lead.image && <img src={lead.image} alt={lead.imageAlt} />}</Link>
+            <Link to={`/article/${lead.slug}`}>{lead.image && <img src={lead.image} alt={lead.imageAlt} fetchPriority="high" decoding="async" width="1600" height="900" sizes="(max-width: 767px) calc(100vw - 32px), 760px" />}</Link>
             <span className="eyebrow">{categoryName(lead.category)}</span>
             <h1><Link to={`/article/${lead.slug}`}>{lead.title}</Link></h1>
             <p className="summary">{lead.summary}</p>
@@ -68,7 +68,7 @@ export default function HomePage() {
 
       <section aria-labelledby="latest-heading">
         <div className="section-heading"><h2 id="latest-heading">최신 뉴스</h2><Link to="/search">전체 뉴스 <ArrowRight size={17} style={{ display: 'inline' }} /></Link></div>
-        <div className="news-grid">{latest.map((article) => <ArticleCard key={article.id} article={article} />)}</div>
+        <div className="news-grid latest-news-grid">{latest.map((article) => <ArticleCard key={article.id} article={article} />)}</div>
       </section>
 
       <SeniorBriefingBar briefings={briefings} />

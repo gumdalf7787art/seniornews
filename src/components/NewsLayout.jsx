@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Search, UserRound, Contrast, ZoomIn } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Contrast, Grid2X2, Home, Search, SlidersHorizontal, UserRound, X, ZoomIn } from 'lucide-react';
 import { categories } from '../data/articles';
 import { getReaderSettings, saveReaderSettings, SETTINGS_EVENT } from '../utils/readerPreferences';
 
@@ -16,9 +16,13 @@ function saveSetting(key, value) {
 
 export default function NewsLayout({ user }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [query, setQuery] = useState('');
   const [largeText, setLargeText] = useState(() => getReaderSettings().largeText);
   const [highContrast, setHighContrast] = useState(() => getReaderSettings().highContrast);
+  const [mobilePanel, setMobilePanel] = useState('');
+  const mobilePanelRef = useRef(null);
+  const mobilePanelOpenerRef = useRef(null);
 
   useEffect(() => {
     document.body.classList.toggle('large-text', largeText);
@@ -51,11 +55,60 @@ export default function NewsLayout({ user }) {
 
   const search = (event) => {
     event.preventDefault();
-    if (query.trim()) navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+    if (query.trim()) {
+      navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+      setMobilePanel('');
+    }
   };
 
+  const openMobilePanel = (panel, event) => {
+    mobilePanelOpenerRef.current = event?.currentTarget || document.activeElement;
+    setMobilePanel(panel);
+  };
+
+  const closeMobilePanel = () => setMobilePanel('');
+
+  useEffect(() => {
+    if (!mobilePanel) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const panel = mobilePanelRef.current;
+    const focusableSelector = 'button:not([disabled]), a[href], input:not([disabled])';
+    window.requestAnimationFrame(() => (panel?.querySelector('[data-autofocus]') || panel?.querySelector(focusableSelector))?.focus());
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeMobilePanel();
+        return;
+      }
+      if (event.key !== 'Tab' || !panel) return;
+      const focusable = [...panel.querySelectorAll(focusableSelector)];
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
+      mobilePanelOpenerRef.current?.focus?.();
+    };
+  }, [mobilePanel]);
+
+  useEffect(() => setMobilePanel(''), [location.pathname]);
+
+  const isWorkRoute = ['/admin', '/creator'].includes(location.pathname);
+  const myPageTarget = user ? '/mypage' : '/login?next=/mypage';
+
   return (
-    <div className="site-shell">
+    <div className={`site-shell ${isWorkRoute ? 'work-shell' : ''}`}>
       <a className="skip-link" href="#main-content">본문으로 바로가기</a>
       <div className="top-utility">
         <div className="utility-inner">
@@ -77,6 +130,7 @@ export default function NewsLayout({ user }) {
             <button aria-label="검색"><Search size={20} /></button>
           </form>
           <Link className="header-account" to={user ? '/mypage' : '/login'}><UserRound size={20} /><span>{user ? user.name : '로그인'}</span></Link>
+          <button type="button" className="mobile-view-settings" onClick={(event) => openMobilePanel('settings', event)} aria-label="보기 설정 열기"><SlidersHorizontal size={22} /></button>
         </div>
         <nav className="category-nav" aria-label="뉴스 카테고리">
           <div className="category-inner">
@@ -104,14 +158,48 @@ export default function NewsLayout({ user }) {
               <Link to="/terms">이용약관</Link>
               <Link to="/contact">문의</Link>
             </div>
-            <div className="footer-meta">
+            <div className="footer-meta desktop-footer-meta">
               <p>법인명: (주)메디프라퍼 | 주소: 서울특별시 동대문구 망우로 60, 6층 (휘경동, 금자탑빌딩) | 대표전화: 02-1234-1234 | 대표이메일: contact@mediproper.com | 팩스: 02-5678-5678</p>
               <p>청소년보호책임자: 민성기 | 제호: 시니어 라이프 뉴스 | 등록번호: 서울 아 ***** | 등록일: 2026-00-00 | 최초발행일: 2026-09-16 | 발행인: 민성기 | 편집인: 이재현</p>
             </div>
+            <details className="mobile-footer-details">
+              <summary>사업자·매체 정보 보기</summary>
+              <div className="footer-meta">
+                <p>법인명: (주)메디프라퍼 | 주소: 서울특별시 동대문구 망우로 60, 6층 (휘경동, 금자탑빌딩) | 대표전화: 02-1234-1234 | 대표이메일: contact@mediproper.com | 팩스: 02-5678-5678</p>
+                <p>청소년보호책임자: 민성기 | 제호: 시니어 라이프 뉴스 | 등록번호: 서울 아 ***** | 등록일: 2026-00-00 | 최초발행일: 2026-09-16 | 발행인: 민성기 | 편집인: 이재현</p>
+              </div>
+            </details>
             <p className="footer-note">© 2026 Senior Life News. All rights reserved.</p>
           </div>
         </div>
       </footer>
+      {!isWorkRoute && <nav className="mobile-bottom-nav" aria-label="모바일 주요 메뉴">
+        <Link to="/" className={location.pathname === '/' ? 'active' : ''}><Home size={21} /><span>홈</span></Link>
+        <button type="button" className={location.pathname.startsWith('/category/') ? 'active' : ''} onClick={(event) => openMobilePanel('categories', event)}><Grid2X2 size={21} /><span>카테고리</span></button>
+        <button type="button" className={location.pathname === '/search' ? 'active' : ''} onClick={(event) => openMobilePanel('search', event)}><Search size={21} /><span>검색</span></button>
+        <Link to={myPageTarget} className={location.pathname === '/mypage' ? 'active' : ''}><UserRound size={21} /><span>마이페이지</span></Link>
+      </nav>}
+      {mobilePanel && <div className="mobile-sheet-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) closeMobilePanel(); }}>
+        <section ref={mobilePanelRef} className="mobile-sheet" role="dialog" aria-modal="true" aria-labelledby={`mobile-${mobilePanel}-title`}>
+          <div className="mobile-sheet-handle" aria-hidden="true" />
+          <div className="mobile-sheet-heading">
+            <h2 id={`mobile-${mobilePanel}-title`}>{mobilePanel === 'categories' ? '뉴스 카테고리' : mobilePanel === 'search' ? '뉴스 검색' : '보기 설정'}</h2>
+            <button type="button" onClick={closeMobilePanel} aria-label="닫기"><X size={23} /></button>
+          </div>
+          {mobilePanel === 'categories' && <div className="mobile-category-grid">
+            <Link to="/" onClick={closeMobilePanel}>주요뉴스</Link>
+            {categories.map((category) => <Link key={category.slug} to={`/category/${category.slug}`} onClick={closeMobilePanel}>{category.name}</Link>)}
+          </div>}
+          {mobilePanel === 'search' && <form className="mobile-search-form" role="search" onSubmit={search}>
+            <label htmlFor="mobile-site-search">궁금한 뉴스 검색</label>
+            <div><input data-autofocus id="mobile-site-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="검색어를 입력하세요" /><button className="primary-button" aria-label="검색"><Search size={21} />검색</button></div>
+          </form>}
+          {mobilePanel === 'settings' && <div className="mobile-view-options">
+            <button type="button" aria-pressed={largeText} onClick={toggleLargeText}><span><ZoomIn size={22} /><strong>큰 글자로 보기</strong></span><span className="mobile-toggle" aria-hidden="true" /></button>
+            <button type="button" aria-pressed={highContrast} onClick={toggleHighContrast}><span><Contrast size={22} /><strong>고대비 화면</strong></span><span className="mobile-toggle" aria-hidden="true" /></button>
+          </div>}
+        </section>
+      </div>}
     </div>
   );
 }

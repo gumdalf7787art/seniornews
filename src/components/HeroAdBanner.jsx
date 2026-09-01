@@ -5,7 +5,7 @@ export default function HeroAdBanner({ banners = [] }) {
   const multiple = banners.length > 1;
 
   useEffect(() => {
-    if (!multiple) return undefined;
+    if (!multiple || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
     const timer = window.setInterval(() => setActiveIndex((current) => (current + 1) % banners.length), 6000);
     return () => window.clearInterval(timer);
   }, [banners.length, multiple]);
@@ -27,7 +27,7 @@ export default function HeroAdBanner({ banners = [] }) {
           aria-hidden={index !== activeIndex}
           tabIndex={index === activeIndex ? 0 : -1}
         >
-          <img src={banner.image_url} alt={index === activeIndex ? banner.image_alt : ''} />
+          <img src={banner.image_url} alt={index === activeIndex ? banner.image_alt : ''} loading="lazy" decoding="async" sizes="(max-width: 767px) calc(100vw - 32px), 400px" />
         </a>
       ))}
       {multiple && (

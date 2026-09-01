@@ -14,7 +14,7 @@ export default function CategoryNewsBlock({ category, articles }) {
 
       <article className="category-featured">
         <Link className="category-featured-image" to={`/article/${featured.slug}`}>
-          {featured.image && <img src={featured.image} alt={featured.imageAlt} />}
+          {featured.image ? <img src={featured.image} alt={featured.imageAlt} loading="lazy" decoding="async" sizes="(max-width: 767px) 100vw, 180px" /> : <span className="article-image-placeholder" aria-hidden="true" />}
         </Link>
         <div className="category-featured-copy">
           <h3><Link to={`/article/${featured.slug}`}>{featured.title}</Link></h3>
@@ -27,7 +27,7 @@ export default function CategoryNewsBlock({ category, articles }) {
         {secondary.slice(0, 4).map((article) => (
           <article className="category-mini-card" key={article.id}>
             <Link to={`/article/${article.slug}`}>
-              {article.image && <img src={article.image} alt={article.imageAlt} />}
+              {article.image ? <img src={article.image} alt={article.imageAlt} loading="lazy" decoding="async" sizes="(max-width: 767px) 96px, 108px" /> : <span className="article-image-placeholder" aria-hidden="true" />}
             </Link>
             <div>
               <h3><Link to={`/article/${article.slug}`}>{article.title}</Link></h3>

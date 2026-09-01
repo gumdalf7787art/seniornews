@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   BookOpenCheck,
@@ -40,6 +40,8 @@ function formatDate(value) {
 
 export default function CreatorPage({ user }) {
   const [tab, setTab] = useState("overview");
+  const tabsRef = useRef(null);
+  const [visibleCount, setVisibleCount] = useState(20);
   const [dashboard, setDashboard] = useState({
     articleCounts: [],
     memberCounts: [],
@@ -58,6 +60,14 @@ export default function CreatorPage({ user }) {
   const [bannerUploading, setBannerUploading] = useState(false);
   const [briefingForm, setBriefingForm] = useState({ category: "복지", message: "", target_url: "", display_order: 0, is_active: true, starts_at: "", ends_at: "" });
   const [editingBriefingId, setEditingBriefingId] = useState(null);
+
+  useEffect(() => {
+    tabsRef.current?.querySelector('.active')?.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }, [tab]);
+
+  useEffect(() => {
+    setVisibleCount(20);
+  }, [tab]);
 
   const loadData = async () => {
     setLoading(true);
@@ -349,7 +359,7 @@ export default function CreatorPage({ user }) {
           {message}
         </p>
       )}
-      <nav className="creator-tabs" aria-label="관리자 관리 메뉴">
+      <nav ref={tabsRef} className="creator-tabs" aria-label="관리자 관리 메뉴">
         {navItems.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -475,7 +485,7 @@ export default function CreatorPage({ user }) {
               </div>
               {dashboard.reviewArticles.length ? (
                 <div className="creator-review-list">
-                  {dashboard.reviewArticles.map((article) => (
+                  {dashboard.reviewArticles.slice(0, visibleCount).map((article) => (
                     <article key={article.id}>
                       <div>
                         <span className="status status-review">
@@ -503,6 +513,15 @@ export default function CreatorPage({ user }) {
                       </div>
                     </article>
                   ))}
+                  {dashboard.reviewArticles.length > visibleCount && (
+                    <button
+                      type="button"
+                      className="mobile-load-more"
+                      onClick={() => setVisibleCount((count) => count + 20)}
+                    >
+                      기사 더 보기
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="empty-state">
@@ -524,7 +543,7 @@ export default function CreatorPage({ user }) {
                 </div>
               </div>
               <div className="member-admin-list">
-                {members.map((member) => (
+                {members.slice(0, visibleCount).map((member) => (
                   <article key={member.id}>
                     <div className="member-admin-main">
                       <strong>{member.name}</strong>
@@ -576,6 +595,15 @@ export default function CreatorPage({ user }) {
                     </div>
                   </article>
                 ))}
+                {members.length > visibleCount && (
+                  <button
+                    type="button"
+                    className="mobile-load-more"
+                    onClick={() => setVisibleCount((count) => count + 20)}
+                  >
+                    회원 더 보기
+                  </button>
+                )}
               </div>
             </section>
           )}
