@@ -172,7 +172,7 @@ export default function NewsLayout({ user }) {
               <span>SENIOR LIFE NEWS</span>
               <i aria-hidden="true" />
             </Link>
-            <Link className="brand-refresh-lab-button" to="/about">
+            <Link className="brand-refresh-lab-button" to="/lab">
               <strong>시니어 라이프 연구소</strong>
               <span>Senior Life Lab</span>
             </Link>
@@ -204,7 +204,7 @@ export default function NewsLayout({ user }) {
               <NavLink to="/" end state={categoryPinned ? { preserveCategoryNavigation: true } : undefined}>주요뉴스</NavLink>
               {categories.map((category) => <NavLink key={category.slug} to={`/category/${category.slug}`} state={categoryPinned ? { preserveCategoryNavigation: true } : undefined}>{category.name}</NavLink>)}
             </div>
-            <Link className="category-sticky-lab" to="/about" tabIndex={categoryPinned ? 0 : -1}>
+            <Link className="category-sticky-lab" to="/lab" tabIndex={categoryPinned ? 0 : -1}>
               <strong>시니어 라이프 연구소</strong>
               <span>Senior Life Lab</span>
             </Link>

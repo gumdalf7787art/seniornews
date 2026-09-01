@@ -18,6 +18,7 @@ const InfoPage = lazy(() => import('./pages/InfoPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 const BrandPreviewPage = lazy(() => import('./pages/BrandPreviewPage'));
 const BrandHeaderPreviewPage = lazy(() => import('./pages/BrandHeaderPreviewPage'));
+const LabPage = lazy(() => import('./pages/LabPage'));
 
 function ScrollToTop() {
   const { pathname, state } = useLocation();
@@ -119,6 +120,9 @@ export default function App() {
             <Route path="privacy" element={<InfoPage type="privacy" />} />
             <Route path="terms" element={<InfoPage type="terms" />} />
             <Route path="contact" element={<InfoPage type="contact" />} />
+            <Route path="lab" element={<LabPage />} />
+            <Route path="lab/:section" element={<LabPage />} />
+            <Route path="lab/:section/:slug" element={<LabPage />} />
             <Route path="brand-preview" element={<BrandPreviewPage />} />
           </Route>
           <Route path="login" element={<Login setIsLoggedIn={handleAuthSuccess} />} />
