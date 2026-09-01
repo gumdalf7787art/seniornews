@@ -63,7 +63,7 @@ img { max-width: 100%; display: block; }
 .category-sticky-wordmark, .category-sticky-lab { display: none; }
 .mobile-menu { display: none; }
 .mobile-view-settings, .mobile-bottom-nav, .mobile-sheet-backdrop, .mobile-footer-details { display: none; }
-.brand-refresh-header { overflow: visible; border-bottom: 1px solid #d9dfe9; background: #fff; }
+.brand-refresh-header { overflow: visible; border-bottom: 1px solid #d9dfe9; background: #fff; backdrop-filter: none; }
 .brand-refresh-masthead {
   position: relative;
   display: grid;
