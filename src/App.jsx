@@ -7,18 +7,53 @@ import KakaoCallback from './components/KakaoCallback';
 import NaverCallback from './components/NaverCallback';
 import GoogleCallback from './components/GoogleCallback';
 
-const HomePage = lazy(() => import('./pages/HomePage'));
-const CategoryPage = lazy(() => import('./pages/CategoryPage'));
-const ArticlePage = lazy(() => import('./pages/ArticlePage'));
-const SearchPage = lazy(() => import('./pages/SearchPage'));
-const MyPage = lazy(() => import('./pages/MyPage'));
-const AdminPage = lazy(() => import('./pages/AdminPage'));
-const CreatorPage = lazy(() => import('./pages/CreatorPage'));
-const InfoPage = lazy(() => import('./pages/InfoPage'));
-const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
-const BrandPreviewPage = lazy(() => import('./pages/BrandPreviewPage'));
-const BrandHeaderPreviewPage = lazy(() => import('./pages/BrandHeaderPreviewPage'));
-const LabPage = lazy(() => import('./pages/LabPage'));
+const dynamicImportFailure = /failed to fetch dynamically imported module|importing a module script failed|loading chunk|chunkloaderror/i;
+
+function lazyWithDeploymentRecovery(factory, pageName) {
+  return lazy(async () => {
+    try {
+      const module = await factory();
+      try {
+        window.sessionStorage.removeItem(`senior-life-news:chunk-refresh:${pageName}`);
+      } catch {
+        // Storage can be unavailable in private browsing contexts.
+      }
+      return module;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const refreshKey = `senior-life-news:chunk-refresh:${pageName}`;
+
+      if (typeof window !== 'undefined' && dynamicImportFailure.test(message)) {
+        try {
+          const alreadyRefreshed = window.sessionStorage.getItem(refreshKey) === '1';
+          if (!alreadyRefreshed) {
+            window.sessionStorage.setItem(refreshKey, '1');
+            window.location.reload();
+            return new Promise(() => {});
+          }
+          window.sessionStorage.removeItem(refreshKey);
+        } catch {
+          // Keep the original error when session storage is not available.
+        }
+      }
+
+      throw error;
+    }
+  });
+}
+
+const HomePage = lazyWithDeploymentRecovery(() => import('./pages/HomePage'), 'home');
+const CategoryPage = lazyWithDeploymentRecovery(() => import('./pages/CategoryPage'), 'category');
+const ArticlePage = lazyWithDeploymentRecovery(() => import('./pages/ArticlePage'), 'article');
+const SearchPage = lazyWithDeploymentRecovery(() => import('./pages/SearchPage'), 'search');
+const MyPage = lazyWithDeploymentRecovery(() => import('./pages/MyPage'), 'mypage');
+const AdminPage = lazyWithDeploymentRecovery(() => import('./pages/AdminPage'), 'admin');
+const CreatorPage = lazyWithDeploymentRecovery(() => import('./pages/CreatorPage'), 'creator');
+const InfoPage = lazyWithDeploymentRecovery(() => import('./pages/InfoPage'), 'info');
+const ResetPasswordPage = lazyWithDeploymentRecovery(() => import('./pages/ResetPasswordPage'), 'reset-password');
+const BrandPreviewPage = lazyWithDeploymentRecovery(() => import('./pages/BrandPreviewPage'), 'brand-preview');
+const BrandHeaderPreviewPage = lazyWithDeploymentRecovery(() => import('./pages/BrandHeaderPreviewPage'), 'brand-header-preview');
+const LabPage = lazyWithDeploymentRecovery(() => import('./pages/LabPage'), 'lab');
 
 function ScrollToTop() {
   const { pathname, state } = useLocation();
