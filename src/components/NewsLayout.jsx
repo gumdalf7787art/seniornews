@@ -113,7 +113,9 @@ export default function NewsLayout({ user }) {
     let frame = 0;
     const updatePinnedState = () => {
       frame = 0;
-      const nextPinned = shell.getBoundingClientRect().top <= 0;
+      // A small threshold avoids the ambiguous sub-pixel "exactly at top" state
+      // that can occur after a React route transition.
+      const nextPinned = shell.getBoundingClientRect().top <= 2;
       setCategoryPinned((current) => (current === nextPinned ? current : nextPinned));
     };
     const onScrollOrResize = () => {
