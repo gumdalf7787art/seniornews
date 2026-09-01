@@ -117,6 +117,7 @@ export default function ArticleBlockEditor({ blocks, onChange, onUploadImage }) 
   const savedRangeRef = useRef(null);
   const inputRef = useRef(null);
   const [signature, setSignature] = useState('');
+  const [titleMenuOpen, setTitleMenuOpen] = useState(false);
   const [linkDialog, setLinkDialog] = useState(false);
   const [linkValue, setLinkValue] = useState('');
   const [modalMessage, setModalMessage] = useState('');
@@ -165,6 +166,40 @@ export default function ArticleBlockEditor({ blocks, onChange, onUploadImage }) 
     const spacer = createTextElement('paragraph');
     block.after(spacer);
     moveCaretToEnd(block);
+    sync();
+  };
+
+  const selectTitleStyle = (variant) => {
+    insertTextBlock('sectionTitle', variant);
+    setTitleMenuOpen(false);
+  };
+
+  const handleEditorKeyDown = (event) => {
+    if (event.key !== 'Backspace' || !event.currentTarget) return;
+    const selection = window.getSelection();
+    if (!selection?.rangeCount || !selection.getRangeAt(0).collapsed) return;
+    const range = selection.getRangeAt(0);
+    const current = range.startContainer.nodeType === Node.ELEMENT_NODE ? range.startContainer : range.startContainer.parentElement;
+    const title = current?.closest?.('h3[data-editor-type="sectionTitle"]');
+    if (!title || plainText(title.innerHTML)) return;
+
+    event.preventDefault();
+    const previous = title.previousElementSibling;
+    const next = title.nextElementSibling;
+    title.remove();
+    if (previous) moveCaretToEnd(previous);
+    else if (next) {
+      const nextRange = document.createRange();
+      nextRange.selectNodeContents(next);
+      nextRange.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(nextRange);
+      editorRef.current?.focus();
+    } else {
+      const paragraph = createTextElement('paragraph');
+      editorRef.current.append(paragraph);
+      moveCaretToEnd(paragraph);
+    }
     sync();
   };
 
@@ -232,12 +267,12 @@ export default function ArticleBlockEditor({ blocks, onChange, onUploadImage }) 
 
   return <section className="article-rich-editor" aria-label="기사 본문 편집기">
     <div className="article-rich-toolbar" role="toolbar" aria-label="본문 편집 도구">
-      <div className="title-menu">
-        <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => insertTextBlock('sectionTitle', 'bar')}><Type size={17} />문단제목</button>
+      <div className={`title-menu ${titleMenuOpen ? 'is-open' : ''}`}>
+        <button type="button" aria-haspopup="menu" aria-expanded={titleMenuOpen} onMouseDown={(event) => event.preventDefault()} onClick={() => setTitleMenuOpen((open) => !open)}><Type size={17} />문단제목</button>
         <div className="title-menu-options" aria-label="문단제목 형태">
-          <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => insertTextBlock('sectionTitle', 'bar')}>세로선 제목</button>
-          <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => insertTextBlock('sectionTitle', 'underline')}>밑줄 제목</button>
-          <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => insertTextBlock('sectionTitle', 'quote')}>인용형 제목</button>
+          <button type="button" role="menuitem" onMouseDown={(event) => event.preventDefault()} onClick={() => selectTitleStyle('bar')}>세로선 제목</button>
+          <button type="button" role="menuitem" onMouseDown={(event) => event.preventDefault()} onClick={() => selectTitleStyle('underline')}>밑줄 제목</button>
+          <button type="button" role="menuitem" onMouseDown={(event) => event.preventDefault()} onClick={() => selectTitleStyle('quote')}>인용형 제목</button>
         </div>
       </div>
       <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={toggleBold}><Bold size={17} />굵게</button>
@@ -246,7 +281,7 @@ export default function ArticleBlockEditor({ blocks, onChange, onUploadImage }) 
       <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => setLinkDialog(true)}><Link2 size={17} />이미지 링크 첨부</button>
       <input ref={inputRef} className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { void insertImage(event.target.files?.[0]); event.target.value = ''; }} />
     </div>
-    <div ref={editorRef} className="article-rich-canvas" contentEditable suppressContentEditableWarning role="textbox" aria-multiline="true" data-placeholder="기사 본문을 입력해 주세요." onInput={sync} onKeyUp={saveRange} onMouseUp={saveRange} onBlur={sync} />
+    <div ref={editorRef} className="article-rich-canvas" contentEditable suppressContentEditableWarning role="textbox" aria-multiline="true" data-placeholder="기사 본문을 입력해 주세요." onInput={sync} onKeyDown={handleEditorKeyDown} onKeyUp={saveRange} onMouseUp={saveRange} onBlur={sync} />
     {linkDialog && <div className="editor-dialog-backdrop" role="presentation"><div className="editor-dialog" role="dialog" aria-modal="true" aria-labelledby="image-link-title"><h3 id="image-link-title">이미지 링크 첨부</h3><label htmlFor="inline-image-link">이미지 주소</label><input id="inline-image-link" type="url" value={linkValue} onChange={(event) => setLinkValue(event.target.value)} placeholder="https://" autoFocus /><div><button type="button" className="secondary-button" onClick={() => setLinkDialog(false)}>취소</button><button type="button" className="primary-button" onClick={insertLinkedImage}>본문에 넣기</button></div></div></div>}
     {modalMessage && <div className="editor-dialog-backdrop" role="presentation"><div className="editor-dialog editor-notice-dialog" role="alertdialog" aria-modal="true"><h3>이미지 첨부 안내</h3><p>{modalMessage}</p><button type="button" className="primary-button" onClick={() => setModalMessage('')}>확인</button></div></div>}
   </section>;
