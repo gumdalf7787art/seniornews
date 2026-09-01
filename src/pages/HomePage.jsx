@@ -3,23 +3,35 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, LoaderCircle } from 'lucide-react';
 import ArticleCard from '../components/ArticleCard';
 import CategoryNewsBlock from '../components/CategoryNewsBlock';
+import HeroAdBanner from '../components/HeroAdBanner';
 import { categories, categoryName } from '../data/articles';
 import { fetchPublishedArticles } from '../utils/publicArticles';
 
 export default function HomePage() {
   const [articles, setArticles] = useState([]);
+  const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchPublishedArticles({ limit: 30 })
-      .then(setArticles)
+    Promise.all([
+      fetchPublishedArticles({ limit: 30 }),
+      fetch('/api/banners').then(async (response) => {
+        if (!response.ok) throw new Error('광고 배너를 불러오지 못했습니다.');
+        const data = await response.json();
+        return data.banners || [];
+      }).catch(() => []),
+    ])
+      .then(([publishedArticles, activeBanners]) => {
+        setArticles(publishedArticles);
+        setBanners(activeBanners);
+      })
       .catch((requestError) => setError(requestError.message || '기사를 불러오지 못했습니다.'))
       .finally(() => setLoading(false));
   }, []);
 
   const lead = articles.find((article) => article.is_featured) || articles[0];
-  const side = useMemo(() => articles.filter((article) => article.id !== lead?.id).slice(0, 4), [articles, lead]);
+  const side = useMemo(() => articles.filter((article) => article.id !== lead?.id).slice(0, 3), [articles, lead]);
   const latest = articles.slice(0, 3);
   const popular = useMemo(() => [...articles].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 5), [articles]);
 
@@ -39,7 +51,10 @@ export default function HomePage() {
             <p className="summary">{lead.summary}</p>
             <div className="meta"><span>{lead.author}</span><time>{lead.publishedAt}</time></div>
           </article>
-          <div className="side-news" aria-label="주요 뉴스 더보기">{side.map((article) => <ArticleCard key={article.id} article={article} compact />)}</div>
+          <div className="hero-side-column">
+            <div className="side-news" aria-label="주요 뉴스 더보기">{side.map((article) => <ArticleCard key={article.id} article={article} compact />)}</div>
+            <HeroAdBanner banners={banners} />
+          </div>
         </div>
       </section>
 

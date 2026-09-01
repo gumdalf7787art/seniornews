@@ -4,11 +4,14 @@ import {
   BookOpenCheck,
   CheckCircle2,
   FolderCog,
+  ImageUp,
   LayoutDashboard,
+  Megaphone,
   Plus,
   RefreshCw,
   Send,
   ShieldCheck,
+  Trash2,
   UsersRound,
 } from "lucide-react";
 
@@ -45,30 +48,38 @@ export default function CreatorPage({ user }) {
   });
   const [members, setMembers] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [newCategory, setNewCategory] = useState({ name: "", slug: "" });
+  const [bannerForm, setBannerForm] = useState({ name: "", image_url: "", image_alt: "", target_url: "", display_order: 0, is_active: true, starts_at: "", ends_at: "" });
+  const [editingBannerId, setEditingBannerId] = useState(null);
+  const [bannerUploading, setBannerUploading] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [dashboardResponse, memberResponse, categoryResponse] =
+      const [dashboardResponse, memberResponse, categoryResponse, bannerResponse] =
         await Promise.all([
           fetch("/api/admin/dashboard", { credentials: "include" }),
           fetch("/api/admin/users", { credentials: "include" }),
           fetch("/api/admin/categories", { credentials: "include" }),
+          fetch("/api/admin/banners", { credentials: "include" }),
         ]);
-      const [dashboardData, memberData, categoryData] = await Promise.all([
+      const [dashboardData, memberData, categoryData, bannerData] = await Promise.all([
         dashboardResponse.json(),
         memberResponse.json(),
         categoryResponse.json(),
+        bannerResponse.json(),
       ]);
       if (!dashboardResponse.ok) throw new Error(dashboardData.message);
       if (!memberResponse.ok) throw new Error(memberData.message);
       if (!categoryResponse.ok) throw new Error(categoryData.message);
+      if (!bannerResponse.ok) throw new Error(bannerData.message);
       setDashboard(dashboardData);
       setMembers(memberData.users || []);
       setCategories(categoryData.categories || []);
+      setBanners(bannerData.banners || []);
     } catch (error) {
       setMessage(error.message || "관리자 관리 정보를 불러오지 못했습니다.");
     } finally {
@@ -195,11 +206,88 @@ export default function CreatorPage({ user }) {
     }
   };
 
+  const resetBannerForm = () => {
+    setEditingBannerId(null);
+    setBannerForm({ name: "", image_url: "", image_alt: "", target_url: "", display_order: 0, is_active: true, starts_at: "", ends_at: "" });
+  };
+
+  const uploadBannerImage = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setMessage("배너 이미지는 JPG, PNG, WEBP 파일만 사용할 수 있습니다.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setMessage("배너 이미지는 10MB 이하만 업로드할 수 있습니다.");
+      return;
+    }
+    if (!bannerForm.image_alt.trim()) {
+      setMessage("이미지 업로드 전에 배너 이미지 설명을 먼저 입력해 주세요.");
+      return;
+    }
+    setBannerUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("alt", bannerForm.image_alt.trim());
+      const response = await fetch("/api/admin/banners/media", { method: "POST", credentials: "include", headers: { "X-Requested-With": "SeniorNews" }, body: formData });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.url) throw new Error(data.message || "배너 이미지를 저장하지 못했습니다.");
+      setBannerForm((current) => ({ ...current, image_url: data.url }));
+      setMessage("배너 이미지가 저장되었습니다. 아래 등록 버튼을 눌러 광고를 노출해 주세요.");
+    } catch (error) {
+      setMessage(error.message || "배너 이미지를 저장하지 못했습니다.");
+    } finally {
+      setBannerUploading(false);
+    }
+  };
+
+  const saveBanner = async (event) => {
+    event.preventDefault();
+    try {
+      const response = await fetch(editingBannerId ? `/api/admin/banners/${editingBannerId}` : "/api/admin/banners", {
+        method: editingBannerId ? "PATCH" : "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json", "X-Requested-With": "SeniorNews" },
+        body: JSON.stringify(bannerForm),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "광고 배너를 저장하지 못했습니다.");
+      setMessage(editingBannerId ? "광고 배너를 수정했습니다." : "광고 배너를 등록했습니다.");
+      resetBannerForm();
+      await loadData();
+    } catch (error) {
+      setMessage(error.message || "광고 배너를 저장하지 못했습니다.");
+    }
+  };
+
+  const editBanner = (banner) => {
+    setEditingBannerId(banner.id);
+    setBannerForm({ ...banner, is_active: Boolean(banner.is_active), starts_at: banner.starts_at || "", ends_at: banner.ends_at || "" });
+  };
+
+  const deleteBanner = async (banner) => {
+    if (!window.confirm(`“${banner.name}” 광고 배너를 삭제할까요?`)) return;
+    try {
+      const response = await fetch(`/api/admin/banners/${banner.id}`, { method: "DELETE", credentials: "include", headers: { "X-Requested-With": "SeniorNews" } });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "광고 배너를 삭제하지 못했습니다.");
+      setMessage("광고 배너를 삭제했습니다.");
+      if (Number(editingBannerId) === Number(banner.id)) resetBannerForm();
+      await loadData();
+    } catch (error) {
+      setMessage(error.message || "광고 배너를 삭제하지 못했습니다.");
+    }
+  };
+
   const navItems = [
     { id: "overview", label: "운영 현황", icon: LayoutDashboard },
     { id: "review", label: "발행 요청", icon: CheckCircle2 },
     { id: "members", label: "회원·권한", icon: UsersRound },
     { id: "categories", label: "카테고리", icon: FolderCog },
+    { id: "banners", label: "광고 배너", icon: Megaphone },
   ];
 
   return (
@@ -528,6 +616,44 @@ export default function CreatorPage({ user }) {
                   </button>
                 </div>
               </form>
+            </section>
+          )}
+          {tab === "banners" && (
+            <section className="panel banner-admin-panel">
+              <div className="panel-heading">
+                <div>
+                  <h2>광고 배너 관리</h2>
+                  <p>홈 주요 뉴스 우측에 노출할 4:3 광고 배너와 연결 주소를 관리합니다.</p>
+                </div>
+              </div>
+              <form className="banner-editor-form" onSubmit={saveBanner}>
+                <h3>{editingBannerId ? "광고 배너 수정" : "새 광고 배너 등록"}</h3>
+                <div className="banner-form-grid">
+                  <label>광고명<input value={bannerForm.name} onChange={(event) => setBannerForm((current) => ({ ...current, name: event.target.value }))} placeholder="관리용 광고명" maxLength={80} required /></label>
+                  <label>연결 주소<input type="url" value={bannerForm.target_url} onChange={(event) => setBannerForm((current) => ({ ...current, target_url: event.target.value }))} placeholder="https://" required /></label>
+                  <label>이미지 설명<input value={bannerForm.image_alt} onChange={(event) => setBannerForm((current) => ({ ...current, image_alt: event.target.value }))} placeholder="배너 이미지를 설명해 주세요" required /></label>
+                  <label>노출 순서<input type="number" min="0" value={bannerForm.display_order} onChange={(event) => setBannerForm((current) => ({ ...current, display_order: event.target.value }))} /></label>
+                  <label>노출 시작일<input type="datetime-local" value={bannerForm.starts_at} onChange={(event) => setBannerForm((current) => ({ ...current, starts_at: event.target.value }))} /></label>
+                  <label>노출 종료일<input type="datetime-local" value={bannerForm.ends_at} onChange={(event) => setBannerForm((current) => ({ ...current, ends_at: event.target.value }))} /></label>
+                </div>
+                <div className="banner-image-upload">
+                  <label className="secondary-button" htmlFor="banner-image-file"><ImageUp size={18} />{bannerUploading ? "이미지 저장 중" : "배너 이미지 업로드"}</label>
+                  <input id="banner-image-file" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadBannerImage} disabled={bannerUploading} />
+                  <span>JPG·PNG·WEBP, 최대 10MB · 이미지 설명 입력 후 업로드</span>
+                </div>
+                {bannerForm.image_url && <img className="banner-form-preview" src={bannerForm.image_url} alt={bannerForm.image_alt || "배너 이미지 미리보기"} />}
+                <label className="banner-active"><input type="checkbox" checked={bannerForm.is_active} onChange={(event) => setBannerForm((current) => ({ ...current, is_active: event.target.checked }))} /> 즉시 노출</label>
+                <div className="banner-form-actions"><button className="primary-button" disabled={bannerUploading}>{editingBannerId ? "배너 수정" : "배너 등록"}</button>{editingBannerId && <button type="button" className="secondary-button" onClick={resetBannerForm}>등록 취소</button>}</div>
+              </form>
+              <div className="banner-admin-list">
+                {banners.length ? banners.map((banner) => (
+                  <article key={banner.id}>
+                    <img src={banner.image_url} alt={banner.image_alt} />
+                    <div><strong>{banner.name}</strong><a href={banner.target_url} target="_blank" rel="noreferrer">{banner.target_url}</a><small>순서 {banner.display_order} · {banner.is_active ? "노출 중" : "비공개"}{banner.starts_at ? ` · 시작 ${formatDate(banner.starts_at)}` : ""}{banner.ends_at ? ` · 종료 ${formatDate(banner.ends_at)}` : ""}</small></div>
+                    <div className="banner-list-actions"><button className="secondary-button" onClick={() => editBanner(banner)}>수정</button><button className="danger-button" onClick={() => deleteBanner(banner)}><Trash2 size={17} />삭제</button></div>
+                  </article>
+                )) : <p className="muted-copy">등록된 광고 배너가 없습니다. 배너를 등록하면 홈 주요 뉴스 우측에 노출됩니다.</p>}
+              </div>
             </section>
           )}
         </>
