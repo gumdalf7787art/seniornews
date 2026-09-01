@@ -56,7 +56,7 @@ export default function AdminPage({ user }) {
   const [uploadingBlockId, setUploadingBlockId] = useState(null);
 
   const isCreator = user.role === "admin";
-  const displayRole = isCreator ? "제작자" : "관리자(기자)";
+  const displayRole = isCreator ? "관리자" : "기자";
 
   const loadArticles = async () => {
     setLoading(true);
@@ -247,7 +247,7 @@ export default function AdminPage({ user }) {
       if (!response.ok) throw new Error(data.message);
       setMessage(
         status === "review"
-          ? "발행 요청을 보냈습니다. 제작자가 바로 발행하거나 수정 후 발행할 수 있습니다."
+          ? "발행 요청을 보냈습니다. 관리자가 바로 발행하거나 수정 후 발행할 수 있습니다."
           : status === "published"
             ? "기사를 바로 발행했습니다."
             : "기사를 임시 저장했습니다.",
@@ -507,7 +507,7 @@ export default function AdminPage({ user }) {
                         </button>
                       )}
                       {article.status === "review" && !isCreator && (
-                        <span className="review-waiting">제작자 발행 대기</span>
+                        <span className="review-waiting">관리자 발행 대기</span>
                       )}
                     </div>
                   </article>
@@ -724,7 +724,7 @@ export default function AdminPage({ user }) {
               <ol>
                 <li>임시 저장</li>
                 <li>발행 요청</li>
-                <li>제작자 발행 또는 직접 발행</li>
+                <li>관리자 발행 또는 직접 발행</li>
               </ol>
             </div>
           </aside>

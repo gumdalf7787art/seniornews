@@ -12,7 +12,7 @@ import {
   saveReaderSettings,
 } from '../utils/readerPreferences';
 
-const ROLE_LABELS = { reader: '일반회원', editor: '관리자(기자)', admin: '제작자' };
+const ROLE_LABELS = { reader: '일반회원', editor: '기자', admin: '관리자' };
 
 function asArticle(bookmark) {
   return {
@@ -113,7 +113,7 @@ export default function MyPage({ user, setUser }) {
     <div className="mypage-layout">
       <nav className="profile-nav" aria-label="마이페이지 메뉴">
         {tabItems.map(({ id, label, icon: Icon }) => <button key={id} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}><Icon size={19} aria-hidden="true" />{label}</button>)}
-        {user.role === 'admin' && <Link className="primary-button" to="/creator">제작자 운영센터</Link>}
+        {user.role === 'admin' && <Link className="primary-button" to="/creator">관리자 운영센터</Link>}
         {['editor', 'admin'].includes(user.role) && <Link className="secondary-button" to="/admin">기사 관리로 이동</Link>}
       </nav>
 
