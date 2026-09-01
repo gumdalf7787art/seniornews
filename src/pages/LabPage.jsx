@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, NavLink, useParams } from 'react-router-dom';
 import { ArrowRight, BookOpen, Download, FileText, HandHeart, HeartPulse, Laptop, Mail, Users } from 'lucide-react';
 
 const themes = [
@@ -24,9 +24,27 @@ function LabMark() {
   return <div className="lab-mark" aria-label="시니어 라이프 연구소"><span>SENIOR LIFE LAB</span><i aria-hidden="true" /></div>;
 }
 
+function LabHeader() {
+  return <header className="lab-site-header">
+    <div className="lab-header-inner">
+      <span aria-hidden="true" />
+      <Link className="lab-header-wordmark" to="/lab" aria-label="시니어 라이프 연구소 홈">
+        <strong>시니어 라이프 연구소</strong>
+        <span>SENIOR LIFE LAB</span>
+        <i aria-hidden="true" />
+      </Link>
+      <Link className="lab-news-shortcut" to="/">
+        <strong>시니어 라이프 뉴스</strong>
+        <span>Senior Life News</span>
+      </Link>
+    </div>
+    <LabNav />
+  </header>;
+}
+
 function LabNav() {
   return <nav className="lab-nav" aria-label="시니어 라이프 연구소 메뉴">
-    <Link to="/lab">연구소 홈</Link><Link to="/lab/about">연구소 소개</Link><Link to="/lab/research">연구 아카이브</Link><Link to="/lab/insight">인사이트</Link><Link to="/lab/contact">협력 문의</Link>
+    <NavLink to="/lab" end>연구소 홈</NavLink><NavLink to="/lab/about">연구소 소개</NavLink><NavLink to="/lab/research">연구 아카이브</NavLink><NavLink to="/lab/insight">인사이트</NavLink><NavLink to="/lab/contact">협력 문의</NavLink>
   </nav>;
 }
 
@@ -65,5 +83,5 @@ export default function LabPage() {
   if (section === 'research') page = slug ? <ResearchDetail slug={slug} /> : <ResearchList />;
   if (section === 'insight') page = <InsightList />;
   if (section === 'contact') page = <LabContact />;
-  return <section className="lab-page"><div className="lab-page-top"><Link to="/lab" className="lab-home-link"><LabMark /></Link><LabNav /></div><div className="lab-page-content">{page}</div></section>;
+  return <section className="lab-page"><LabHeader /><div className="lab-page-content">{page}</div><footer className="lab-site-footer"><p>시니어 라이프 연구소 · (주)메디프라퍼</p><Link to="/">시니어 라이프 뉴스로 돌아가기 <ArrowRight size={15} /></Link></footer></section>;
 }

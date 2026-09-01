@@ -120,11 +120,11 @@ export default function App() {
             <Route path="privacy" element={<InfoPage type="privacy" />} />
             <Route path="terms" element={<InfoPage type="terms" />} />
             <Route path="contact" element={<InfoPage type="contact" />} />
-            <Route path="lab" element={<LabPage />} />
-            <Route path="lab/:section" element={<LabPage />} />
-            <Route path="lab/:section/:slug" element={<LabPage />} />
             <Route path="brand-preview" element={<BrandPreviewPage />} />
           </Route>
+          <Route path="lab" element={<LabPage />} />
+          <Route path="lab/:section" element={<LabPage />} />
+          <Route path="lab/:section/:slug" element={<LabPage />} />
           <Route path="login" element={<Login setIsLoggedIn={handleAuthSuccess} />} />
           <Route path="signup" element={<SignUp setIsLoggedIn={handleAuthSuccess} />} />
           <Route path="reset-password" element={<ResetPasswordPage />} />
