@@ -27,7 +27,7 @@ function LabMark() {
 function LabHeader() {
   return <header className="lab-site-header">
     <div className="lab-header-inner">
-      <span aria-hidden="true" />
+      <p className="lab-header-tagline">건강한 삶의 후반전을<br />연구합니다.</p>
       <Link className="lab-header-wordmark" to="/lab" aria-label="시니어 라이프 연구소 홈">
         <strong>시니어 라이프 연구소</strong>
         <span>SENIOR LIFE LAB</span>
