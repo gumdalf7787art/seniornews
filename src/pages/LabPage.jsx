@@ -101,5 +101,5 @@ export default function LabPage() {
   if (section === 'research') page = slug ? <ResearchDetail slug={slug} /> : <ResearchList />;
   if (section === 'insight') page = <InsightList />;
   if (section === 'contact') page = <LabContact />;
-  return <section className="lab-page"><LabHeader /><div className={`lab-page-content ${!section ? 'lab-page-content-home' : ''}`}>{page}</div><footer className="lab-site-footer"><p>시니어 라이프 연구소 · (주)메디프라퍼</p><Link to="/">시니어 라이프 뉴스로 돌아가기 <ArrowRight size={15} /></Link></footer></section>;
+  return <section className="lab-page"><LabHeader /><div className={`lab-page-content ${!section ? 'lab-page-content-home' : ''}`}>{page}</div><footer className="lab-site-footer"><div className="lab-footer-inner"><Link className="lab-footer-wordmark" to="/lab" aria-label="시니어 라이프 연구소 홈"><strong>시니어 라이프 연구소</strong><span>SENIOR LIFE LAB</span><i aria-hidden="true" /></Link><div className="lab-footer-meta"><p>연구소명: 시니어 라이프 연구소 | 연구소장: 민성기 | 법인명: (주)메디프라퍼</p><p>주소: 서울특별시 동대문구 망우로 60, 6층 (휘경동, 금자탑빌딩)</p><p>대표전화: 02-1234-1234 | 대표이메일: contact@mediproper.com | 팩스: 02-5678-5678</p></div></div></footer></section>;
 }
