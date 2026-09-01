@@ -31,7 +31,7 @@ export default function CategoryNewsBlock({ category, articles }) {
             </Link>
             <div>
               <h3><Link to={`/article/${article.slug}`}>{article.title}</Link></h3>
-              <time>{article.publishedAt?.split(' ')[0]}</time>
+              <div className="category-mini-meta"><span>{article.author}</span><time>{article.publishedAt?.split(' ')[0]}</time></div>
             </div>
           </article>
         ))}

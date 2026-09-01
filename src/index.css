@@ -87,11 +87,11 @@ main { flex: 1; }
 .category-featured-copy { min-width: 0; }
 .category-featured h3 { margin: 0 0 8px; font-size: 21px; line-height: 1.4; letter-spacing: -.45px; }
 .category-featured .summary { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; margin: 0 0 13px; }
-.category-mini-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 18px; }
+.category-mini-grid { display: grid; grid-template-columns: 1fr; }
 .category-mini-card { display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 12px; align-items: center; min-height: 104px; padding: 15px 0; border-bottom: 1px solid var(--line); }
 .category-mini-card img { display: block; width: 108px; height: 72px; object-fit: cover; background: #e7ebe7; border-radius: 6px; }
-.category-mini-card h3 { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 3; margin: 0 0 6px; font-size: 16px; line-height: 1.42; letter-spacing: -.25px; }
-.category-mini-card time { color: var(--muted); font-size: 13px; }
+.category-mini-card h3 { overflow: hidden; margin: 0 0 7px; font-size: 16px; line-height: 1.42; letter-spacing: -.25px; text-overflow: ellipsis; white-space: nowrap; }
+.category-mini-meta { display: flex; gap: 10px; color: var(--muted); font-size: 13px; white-space: nowrap; }
 .popular-policy { display: grid; grid-template-columns: 1.35fr 1fr; gap: 34px; margin-top: 64px; }
 .popular-list { list-style: none; padding: 0; margin: 0; counter-reset: popular; }
 .popular-list li { counter-increment: popular; border-bottom: 1px solid var(--line); }
@@ -442,7 +442,7 @@ main { flex: 1; }
   .category-mini-grid { grid-template-columns: 1fr; }
   .category-mini-card { grid-template-columns: 96px minmax(0, 1fr); min-height: 96px; }
   .category-mini-card img { width: 96px; height: 68px; }
-  .category-mini-card h3 { font-size: 17px; -webkit-line-clamp: 2; }
+  .category-mini-card h3 { font-size: 17px; -webkit-line-clamp: unset; white-space: nowrap; }
   .list-item { grid-template-columns: 118px 1fr; gap: 15px; }
   .list-item img { width: 118px; height: 92px; }
   .list-item h2 { font-size: 19px; }
