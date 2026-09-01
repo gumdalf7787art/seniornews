@@ -87,5 +87,5 @@ export default function LabPage() {
   if (section === 'research') page = slug ? <ResearchDetail slug={slug} /> : <ResearchList />;
   if (section === 'insight') page = <InsightList />;
   if (section === 'contact') page = <LabContact />;
-  return <section className="lab-page"><LabHeader /><div className="lab-page-content">{page}</div><footer className="lab-site-footer"><p>시니어 라이프 연구소 · (주)메디프라퍼</p><Link to="/">시니어 라이프 뉴스로 돌아가기 <ArrowRight size={15} /></Link></footer></section>;
+  return <section className="lab-page"><LabHeader /><div className={`lab-page-content ${!section ? 'lab-page-content-home' : ''}`}>{page}</div><footer className="lab-site-footer"><p>시니어 라이프 연구소 · (주)메디프라퍼</p><Link to="/">시니어 라이프 뉴스로 돌아가기 <ArrowRight size={15} /></Link></footer></section>;
 }
