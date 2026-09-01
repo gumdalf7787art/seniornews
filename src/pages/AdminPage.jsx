@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  Archive,
   CalendarClock,
   CheckCircle2,
   FilePenLine,
@@ -9,6 +10,7 @@ import {
   Pencil,
   Plus,
   Send,
+  Trash2,
   UploadCloud,
 } from "lucide-react";
 import { categories } from "../data/articles";
@@ -296,6 +298,58 @@ export default function AdminPage({ user }) {
     }
   };
 
+  const archiveArticle = async (article) => {
+    if (!window.confirm(`“${article.title}” 기사를 비공개로 전환할까요? 기사 내용은 보관되며 나중에 복원할 수 있습니다.`)) return;
+    try {
+      const response = await fetch(`/api/admin/articles/${article.id}/archive`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "X-Requested-With": "SeniorNews" },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message);
+      setMessage("기사를 비공개로 전환했습니다. 보관됨 목록에서 복원할 수 있습니다.");
+      await loadArticles();
+    } catch (error) {
+      setMessage(error.message || "기사를 비공개로 전환하지 못했습니다.");
+    }
+  };
+
+  const restoreArticle = async (article) => {
+    if (!window.confirm(`“${article.title}” 기사를 작성 중 상태로 복원할까요?`)) return;
+    try {
+      const response = await fetch(`/api/admin/articles/${article.id}/restore`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "X-Requested-With": "SeniorNews" },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message);
+      setMessage("기사를 작성 중 상태로 복원했습니다.");
+      await loadArticles();
+      setFilter("draft");
+    } catch (error) {
+      setMessage(error.message || "기사를 복원하지 못했습니다.");
+    }
+  };
+
+  const deleteArticle = async (article) => {
+    if (!window.confirm(`“${article.title}” 기사를 영구 삭제할까요? 기사 본문, 북마크와 조회 기록도 함께 삭제되며 되돌릴 수 없습니다.`)) return;
+    try {
+      const response = await fetch(`/api/admin/articles/${article.id}`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: { "X-Requested-With": "SeniorNews" },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message);
+      setMessage("기사를 영구 삭제했습니다.");
+      await loadArticles();
+    } catch (error) {
+      setMessage(error.message || "기사를 삭제하지 못했습니다.");
+    }
+  };
+
   const uploadImage = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -450,6 +504,7 @@ export default function AdminPage({ user }) {
                 { id: "draft", label: "작성 중" },
                 { id: "review", label: "발행 요청" },
                 { id: "published", label: "공개 중" },
+                { id: "archived", label: "보관됨" },
               ].map((item) => (
                 <button
                   key={item.id}
@@ -508,6 +563,32 @@ export default function AdminPage({ user }) {
                       )}
                       {article.status === "review" && !isCreator && (
                         <span className="review-waiting">관리자 발행 대기</span>
+                      )}
+                      {article.status === "archived" ? (
+                        <button
+                          className="secondary-button"
+                          onClick={() => restoreArticle(article)}
+                        >
+                          <Archive size={17} />
+                          복원
+                        </button>
+                      ) : (
+                        <button
+                          className="secondary-button"
+                          onClick={() => archiveArticle(article)}
+                        >
+                          <Archive size={17} />
+                          비공개
+                        </button>
+                      )}
+                      {isCreator && (
+                        <button
+                          className="danger-button"
+                          onClick={() => deleteArticle(article)}
+                        >
+                          <Trash2 size={17} />
+                          삭제
+                        </button>
                       )}
                     </div>
                   </article>

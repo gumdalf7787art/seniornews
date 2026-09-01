@@ -32,7 +32,31 @@ export async function onRequestPatch(context) {
     const action = nextStatus === 'review' ? 'request_publication' : nextStatus === 'published' ? (auth.user.role === 'admin' ? 'edit_publish' : 'direct_publish') : 'update';
     await audit(context.env, auth.user.id, action, 'article', id, { title: data.title });
     return json({ success: true, status: nextStatus });
-  } catch (error) {
+  } catch {
     return json({ message: String(error.message).includes('UNIQUE') ? '이미 사용 중인 기사 주소입니다.' : '기사를 수정하지 못했습니다.' }, String(error.message).includes('UNIQUE') ? 409 : 500);
+  }
+}
+
+export async function onRequestDelete(context) {
+  if (!verifyMutationRequest(context.request)) return json({ message: '잘못된 요청입니다.' }, 403);
+  const auth = await requireUser(context, ['admin']);
+  if (auth.error) return auth.error;
+  const id = Number(context.params.id);
+  if (!Number.isInteger(id)) return json({ message: '잘못된 기사 번호입니다.' }, 400);
+
+  const article = await context.env.DB.prepare('SELECT id,title FROM articles WHERE id=?').bind(id).first();
+  if (!article) return json({ message: '기사를 찾을 수 없습니다.' }, 404);
+
+  try {
+    await context.env.DB.batch([
+      context.env.DB.prepare('DELETE FROM bookmarks WHERE article_id=?').bind(id),
+      context.env.DB.prepare('DELETE FROM article_views WHERE article_id=?').bind(id),
+      context.env.DB.prepare('DELETE FROM article_tags WHERE article_id=?').bind(id),
+      context.env.DB.prepare('DELETE FROM articles WHERE id=?').bind(id),
+    ]);
+    await audit(context.env, auth.user.id, 'delete', 'article', id, { title: article.title });
+    return json({ success: true });
+  } catch (error) {
+    return json({ message: '기사를 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.' }, 500);
   }
 }
