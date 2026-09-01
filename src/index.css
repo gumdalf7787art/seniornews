@@ -222,6 +222,7 @@ main { flex: 1; }
 .mobile-article-sidebar { display: none; }
 .article-reading-progress { display: none; }
 .article-sidebar-section { border-top: 4px solid var(--green-900); padding-top: 18px; }
+.article-sidebar > .hero-ad { margin: 24px 0; }
 .article-sidebar-section h2 { margin: 0 0 16px; font-size: 25px; line-height: 1.25; letter-spacing: -.4px; }
 .popular-sidebar-list { display: grid; gap: 0; }
 .popular-sidebar-item { display: grid; grid-template-columns: 28px minmax(0, 1fr) 92px; gap: 12px; align-items: center; min-height: 82px; padding: 14px 0; border-bottom: 1px solid var(--line); }
