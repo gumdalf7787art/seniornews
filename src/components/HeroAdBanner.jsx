@@ -13,13 +13,23 @@ export default function HeroAdBanner({ banners = [] }) {
   useEffect(() => setActiveIndex(0), [banners.length]);
 
   if (!banners.length) return null;
-  const banner = banners[activeIndex] || banners[0];
   return (
     <aside className="hero-ad" aria-label="광고">
       <span className="hero-ad-label">광고</span>
-      <a href={banner.target_url} target="_blank" rel="sponsored noopener noreferrer" aria-label={`${banner.name} 광고 열기`}>
-        <img src={banner.image_url} alt={banner.image_alt} />
-      </a>
+      {banners.map((banner, index) => (
+        <a
+          key={banner.id}
+          className={`hero-ad-slide ${index === activeIndex ? 'active' : ''}`}
+          href={banner.target_url}
+          target="_blank"
+          rel="sponsored noopener noreferrer"
+          aria-label={`${banner.name} 광고 열기`}
+          aria-hidden={index !== activeIndex}
+          tabIndex={index === activeIndex ? 0 : -1}
+        >
+          <img src={banner.image_url} alt={index === activeIndex ? banner.image_alt : ''} />
+        </a>
+      ))}
       {multiple && (
         <div className="hero-ad-dots" aria-label="광고 배너 선택">
           {banners.map((item, index) => (
