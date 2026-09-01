@@ -78,10 +78,10 @@ img { max-width: 100%; display: block; }
 .brand-refresh-wordmark strong { background: linear-gradient(100deg, #8ec2ff 0%, #a0a3ff 47%, #d1a6ff 100%); -webkit-background-clip: text; background-clip: text; color: transparent; font-size: clamp(38px, 4.6vw, 62px); font-weight: 900; letter-spacing: -.09em; line-height: 1; white-space: nowrap; }
 .brand-refresh-wordmark span { color: #d5ddfa; font-family: Arial, sans-serif; font-size: clamp(11px, 1.35vw, 15px); font-weight: 500; letter-spacing: .34em; }
 .brand-refresh-wordmark > i { display: block; width: min(100%, 390px); height: 2px; background: linear-gradient(90deg, transparent, #8ec2ff 13%, #a6a5ff 50%, #d1a6ff 87%, transparent); }
-.brand-refresh-lab-button { justify-self: end; display: grid; min-width: 170px; justify-items: center; gap: 6px; padding: 13px 17px; border: 1px solid rgba(189, 202, 255, .55); border-radius: 10px; color: #f0f4ff; background: rgba(255,255,255,.07); text-align: center; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
+.brand-refresh-lab-button { justify-self: end; display: grid; min-width: 213px; justify-items: center; gap: 2px; padding: 16px 21px; border: 1px solid rgba(189, 202, 255, .55); border-radius: 11px; color: #f0f4ff; background: rgba(255,255,255,.07); text-align: center; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
 .brand-refresh-lab-button:hover { border-color: #bdb4ff; background: rgba(168, 135, 255, .15); }
-.brand-refresh-lab-button strong { font-size: 15px; letter-spacing: -.04em; }
-.brand-refresh-lab-button span { color: #bdcaff; font-family: Arial, sans-serif; font-size: 10px; letter-spacing: .12em; }
+.brand-refresh-lab-button strong { font-size: 19px; letter-spacing: -.055em; line-height: 1.18; }
+.brand-refresh-lab-button span { color: #bdcaff; font-family: Arial, sans-serif; font-size: 12px; letter-spacing: .12em; line-height: 1.1; }
 .brand-refresh-corner-lines { position: absolute; z-index: 1; width: 370px; height: 260px; opacity: .72; pointer-events: none; }
 .brand-refresh-corner-lines i { position: absolute; width: 390px; height: 390px; border: 1px solid rgba(118, 153, 255, .55); border-radius: 50%; }
 .brand-refresh-corner-lines-left { top: -195px; left: -205px; }
@@ -95,6 +95,7 @@ img { max-width: 100%; display: block; }
 .brand-refresh-header .header-inner { display: none; }
 .brand-refresh-header .category-nav { border-top: 1px solid #e1e5ed; border-bottom: 0; }
 .brand-refresh-header .category-inner { justify-content: center; }
+.brand-refresh-header .category-inner a { font-size: 18px; }
 .brand-refresh-header .category-inner a:hover, .brand-refresh-header .category-inner a.active { color: #6653c9; }
 .mobile-load-more { width: 100%; min-height: 48px; margin-top: 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--green); font: inherit; font-weight: 800; cursor: pointer; }
 main { flex: 1; }
@@ -537,9 +538,9 @@ main { flex: 1; }
   .brand-refresh-wordmark span { font-size: 10px; letter-spacing: .23em; }
   .brand-refresh-wordmark > i { width: 210px; height: 1px; }
   .brand-refresh-message { grid-row: 2; font-size: 15px; line-height: 1.35; }
-  .brand-refresh-lab-button { grid-row: 2; min-width: 116px; gap: 3px; padding: 8px 8px; border-radius: 7px; }
-  .brand-refresh-lab-button strong { font-size: 12px; }
-  .brand-refresh-lab-button span { font-size: 8px; }
+  .brand-refresh-lab-button { grid-row: 2; min-width: 142px; gap: 2px; padding: 9px 9px; border-radius: 7px; }
+  .brand-refresh-lab-button strong { font-size: 14px; }
+  .brand-refresh-lab-button span { font-size: 9px; }
   .brand-refresh-corner-lines { width: 230px; height: 180px; opacity: .55; }
   .brand-refresh-corner-lines i { width: 245px; height: 245px; }
   .brand-refresh-corner-lines-left { top: -148px; left: -151px; }
