@@ -74,7 +74,7 @@ export default function HomePage() {
       <SeniorBriefingBar briefings={briefings} />
 
       <div className="category-sections">
-        {categories.slice(0, 4).map((category) => <CategoryNewsBlock key={category.slug} category={category} articles={articles.filter((article) => article.category === category.slug).slice(0, 5)} />)}
+        {categories.map((category) => <CategoryNewsBlock key={category.slug} category={category} articles={articles.filter((article) => article.category === category.slug).slice(0, 5)} />)}
       </div>
 
       <div className="popular-policy">
