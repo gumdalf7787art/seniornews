@@ -17,6 +17,7 @@ const CreatorPage = lazy(() => import('./pages/CreatorPage'));
 const InfoPage = lazy(() => import('./pages/InfoPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 const BrandPreviewPage = lazy(() => import('./pages/BrandPreviewPage'));
+const BrandHeaderPreviewPage = lazy(() => import('./pages/BrandHeaderPreviewPage'));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -115,6 +116,7 @@ export default function App() {
           <Route path="auth/kakao/callback" element={<KakaoCallback setIsLoggedIn={handleAuthSuccess} />} />
           <Route path="auth/naver/callback" element={<NaverCallback setIsLoggedIn={handleAuthSuccess} />} />
           <Route path="auth/google/callback" element={<GoogleCallback setIsLoggedIn={handleAuthSuccess} />} />
+          <Route path="brand-header-preview" element={<BrandHeaderPreviewPage user={user} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

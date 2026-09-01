@@ -1015,6 +1015,64 @@ main { flex: 1; }
 .brand-symbol-copy p { max-width: 260px; margin: 7px 0 0; color: rgba(222, 229, 255, .78); font-size: 13px; line-height: 1.55; }
 .brand-symbol-svg { display: block; }
 
+.brand-header-preview-page { min-height: 100vh; background: #fbfaf6; }
+.brand-header-preview-label { width: min(1180px, calc(100% - 48px)); margin: 0 auto; padding: 16px 0; color: #6576a1; font-family: Arial, sans-serif; font-size: 11px; font-weight: 800; letter-spacing: .16em; }
+
+.life-lab-header {
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  background:
+    radial-gradient(circle at 94% 14%, rgba(126, 39, 188, .55), transparent 32%),
+    radial-gradient(circle at 2% 100%, rgba(21, 92, 205, .28), transparent 31%),
+    linear-gradient(110deg, #071331 0%, #0d1640 52%, #25104b 100%);
+}
+
+.life-lab-header-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: min(1180px, calc(100% - 48px));
+  min-height: 138px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 auto;
+  padding: 24px 0;
+}
+
+.life-lab-message { margin: 0; font-size: clamp(22px, 2.25vw, 32px); font-weight: 800; letter-spacing: -.065em; line-height: 1.35; }
+.life-lab-name { display: grid; justify-items: end; gap: 7px; text-align: right; }
+.life-lab-name strong { color: #e9edff; font-size: clamp(17px, 1.65vw, 22px); font-weight: 700; letter-spacing: -.055em; }
+.life-lab-name span { color: #b8c8ff; font-family: Arial, sans-serif; font-size: 12px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; }
+
+.life-lab-header-lines { position: absolute; top: 0; right: -30px; bottom: 0; width: min(47vw, 610px); opacity: .68; transform: rotate(-3deg); }
+.life-lab-header-lines i { position: absolute; width: 150%; height: 260px; border: 1px solid rgba(140, 146, 255, .44); border-radius: 50%; transform: rotate(-38deg); }
+.life-lab-header-lines i:nth-child(1) { top: -190px; right: -500px; }
+.life-lab-header-lines i:nth-child(2) { top: -172px; right: -474px; border-color: rgba(151, 132, 249, .39); }
+.life-lab-header-lines i:nth-child(3) { top: -154px; right: -448px; border-color: rgba(169, 121, 247, .37); }
+.life-lab-header-lines i:nth-child(4) { top: -136px; right: -422px; border-color: rgba(183, 113, 243, .35); }
+.life-lab-header-lines i:nth-child(5) { top: -118px; right: -396px; border-color: rgba(197, 105, 239, .32); }
+.life-lab-header-lines i:nth-child(6) { top: -100px; right: -370px; border-color: rgba(112, 151, 255, .35); }
+.life-lab-header-lines i:nth-child(7) { top: -82px; right: -344px; border-color: rgba(98, 166, 255, .34); }
+.life-lab-header-lines i:nth-child(8) { top: -64px; right: -318px; border-color: rgba(126, 182, 255, .31); }
+
+.life-lab-controls { border-bottom: 1px solid #e0e4ec; background: #fff; }
+.life-lab-controls-inner { display: grid; width: min(1180px, calc(100% - 48px)); min-height: 78px; grid-template-columns: 1fr minmax(300px, 500px) auto; gap: 20px; align-items: center; margin: 0 auto; }
+.life-lab-home-link { color: #121d41; font-size: 20px; font-weight: 900; letter-spacing: -.065em; }
+.life-lab-search { display: flex; height: 44px; overflow: hidden; border: 1px solid #b9c3d3; border-radius: 999px; background: #fff; }
+.life-lab-search input { width: 100%; min-width: 0; border: 0; outline: 0; padding: 0 18px; color: #1d2745; font: inherit; }
+.life-lab-search button { min-width: 74px; border: 0; color: #fff; background: #172650; font-weight: 800; cursor: pointer; }
+.life-lab-login { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; padding: 0 19px; border: 1px solid #253866; border-radius: 8px; color: #172650; font-weight: 800; }
+.life-lab-category-nav { border-bottom: 1px solid #d9dfe9; background: #fff; }
+.life-lab-category-nav > div { display: flex; width: min(1180px, calc(100% - 48px)); min-height: 56px; gap: clamp(20px, 3.4vw, 48px); align-items: center; margin: 0 auto; overflow-x: auto; scrollbar-width: none; }
+.life-lab-category-nav a { min-width: max-content; color: #263049; font-size: 16px; font-weight: 800; }
+.life-lab-category-nav a:first-child { color: #6653c9; }
+
+.brand-header-preview-canvas { width: min(1180px, calc(100% - 48px)); padding: 70px 0 100px; margin: 0 auto; }
+.brand-header-preview-canvas h1 { max-width: 760px; margin: 9px 0 15px; color: #111d3f; font-size: clamp(33px, 4.6vw, 56px); letter-spacing: -.075em; }
+.brand-header-preview-canvas > p:last-of-type { max-width: 730px; margin: 0; color: #58636c; font-size: 18px; line-height: 1.75; }
+.brand-header-preview-placeholder { display: grid; min-height: 260px; place-items: center; margin-top: 44px; border: 1px dashed #bfc8d8; color: #6c7892; background: linear-gradient(135deg, #f4f6fb, #fff); font-size: 15px; }
+
 @media (max-width: 767px) {
   .brand-preview { width: calc(100% - 32px); padding-top: 34px; padding-bottom: 56px; }
   .brand-preview-intro { margin-bottom: 30px; }
@@ -1034,6 +1092,18 @@ main { flex: 1; }
   .brand-symbol-preview-heading > p:last-child { font-size: 16px; }
   .brand-symbol-preview-grid { grid-template-columns: 1fr; }
   .brand-symbol-card-meta { min-height: 0; }
+  .brand-header-preview-label { width: calc(100% - 32px); }
+  .life-lab-header-inner { width: calc(100% - 32px); min-height: 132px; align-items: flex-start; flex-direction: column; justify-content: center; gap: 18px; }
+  .life-lab-message { font-size: 24px; }
+  .life-lab-name { justify-items: start; text-align: left; }
+  .life-lab-header-lines { right: -155px; width: 330px; }
+  .life-lab-controls-inner { width: calc(100% - 32px); min-height: auto; grid-template-columns: 1fr auto; gap: 12px; padding: 13px 0; }
+  .life-lab-home-link { grid-column: 1 / -1; font-size: 18px; }
+  .life-lab-search { height: 46px; }
+  .life-lab-login { min-height: 46px; padding: 0 13px; }
+  .life-lab-category-nav > div { width: calc(100% - 32px); gap: 27px; }
+  .brand-header-preview-canvas { width: calc(100% - 32px); padding: 46px 0 70px; }
+  .brand-header-preview-canvas > p:last-of-type { font-size: 16px; }
 }
 
 @media (max-width: 359px) {
