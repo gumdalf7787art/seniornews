@@ -20,10 +20,21 @@ const BrandPreviewPage = lazy(() => import('./pages/BrandPreviewPage'));
 const BrandHeaderPreviewPage = lazy(() => import('./pages/BrandHeaderPreviewPage'));
 
 function ScrollToTop() {
-  const { pathname } = useLocation();
+  const { pathname, state } = useLocation();
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    if (!state?.preserveCategoryNavigation) {
+      window.scrollTo(0, 0);
+      return undefined;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      const categoryShell = document.querySelector('.category-nav-shell');
+      if (!categoryShell) return;
+      const top = categoryShell.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo(0, top);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [pathname, state?.preserveCategoryNavigation]);
   return null;
 }
 

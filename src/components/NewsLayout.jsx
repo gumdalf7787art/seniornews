@@ -199,8 +199,8 @@ export default function NewsLayout({ user }) {
               <span>SENIOR LIFE NEWS</span>
             </Link>
             <div className="category-main-links">
-              <NavLink to="/" end>주요뉴스</NavLink>
-              {categories.map((category) => <NavLink key={category.slug} to={`/category/${category.slug}`}>{category.name}</NavLink>)}
+              <NavLink to="/" end state={categoryPinned ? { preserveCategoryNavigation: true } : undefined}>주요뉴스</NavLink>
+              {categories.map((category) => <NavLink key={category.slug} to={`/category/${category.slug}`} state={categoryPinned ? { preserveCategoryNavigation: true } : undefined}>{category.name}</NavLink>)}
             </div>
             <Link className="category-sticky-lab" to="/about" tabIndex={categoryPinned ? 0 : -1}>
               <strong>시니어 라이프 연구소</strong>
