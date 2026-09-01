@@ -21,8 +21,10 @@ export default function NewsLayout({ user }) {
   const [largeText, setLargeText] = useState(() => getReaderSettings().largeText);
   const [highContrast, setHighContrast] = useState(() => getReaderSettings().highContrast);
   const [mobilePanel, setMobilePanel] = useState('');
+  const [categoryPinned, setCategoryPinned] = useState(false);
   const mobilePanelRef = useRef(null);
   const mobilePanelOpenerRef = useRef(null);
+  const categorySentinelRef = useRef(null);
 
   useEffect(() => {
     document.body.classList.toggle('large-text', largeText);
@@ -104,6 +106,16 @@ export default function NewsLayout({ user }) {
 
   useEffect(() => setMobilePanel(''), [location.pathname]);
 
+  useEffect(() => {
+    const sentinel = categorySentinelRef.current;
+    if (!sentinel || !window.IntersectionObserver) return undefined;
+    const observer = new IntersectionObserver(([entry]) => {
+      setCategoryPinned(!entry.isIntersecting);
+    }, { threshold: 0 });
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, []);
+
   const isWorkRoute = ['/admin', '/creator'].includes(location.pathname);
   const myPageTarget = user ? '/mypage' : '/login?next=/mypage';
 
@@ -119,7 +131,7 @@ export default function NewsLayout({ user }) {
           </div>
         </div>
       </div>
-      <header className="site-header brand-refresh-header">
+      <header className={`site-header brand-refresh-header ${categoryPinned ? 'category-is-pinned' : ''}`}>
         <div className="brand-refresh-masthead">
           <div className="brand-refresh-tools">
             <form className="brand-refresh-search" role="search" onSubmit={search}>
@@ -165,10 +177,21 @@ export default function NewsLayout({ user }) {
           <Link className="header-account" to={user ? '/mypage' : '/login'}><UserRound size={20} /><span>{user ? user.name : '로그인'}</span></Link>
           <button type="button" className="mobile-view-settings" onClick={(event) => openMobilePanel('settings', event)} aria-label="보기 설정 열기"><SlidersHorizontal size={22} /></button>
         </div>
-        <nav className="category-nav" aria-label="뉴스 카테고리">
+        <div ref={categorySentinelRef} className="category-sticky-sentinel" aria-hidden="true" />
+        <nav className={`category-nav ${categoryPinned ? 'is-pinned' : ''}`} aria-label="뉴스 카테고리">
           <div className="category-inner">
-            <NavLink to="/" end>주요뉴스</NavLink>
-            {categories.map((category) => <NavLink key={category.slug} to={`/category/${category.slug}`}>{category.name}</NavLink>)}
+            <Link className="category-sticky-wordmark" to="/" tabIndex={categoryPinned ? 0 : -1}>
+              <strong>시니어 라이프 뉴스</strong>
+              <span>SENIOR LIFE NEWS</span>
+            </Link>
+            <div className="category-main-links">
+              <NavLink to="/" end>주요뉴스</NavLink>
+              {categories.map((category) => <NavLink key={category.slug} to={`/category/${category.slug}`}>{category.name}</NavLink>)}
+            </div>
+            <Link className="category-sticky-lab" to="/about" tabIndex={categoryPinned ? 0 : -1}>
+              <strong>시니어 라이프 연구소</strong>
+              <span>Senior Life Lab</span>
+            </Link>
           </div>
         </nav>
       </header>
