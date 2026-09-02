@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>시니어 라이프 뉴스 공유 이미지 원본</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", Arial, sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+
+      .og-card {
+        position: relative;
+        display: grid;
+        width: 2048px;
+        height: 1152px;
+        place-items: center;
+        overflow: hidden;
+        isolation: isolate;
+        background:
+          radial-gradient(circle at 95% 12%, rgba(126, 39, 188, .55), transparent 31%),
+          radial-gradient(circle at 3% 100%, rgba(21, 92, 205, .3), transparent 32%),
+          linear-gradient(112deg, #071331 0%, #0d1640 48%, #25104b 100%);
+      }
+
+      .corner-lines { position: absolute; z-index: -1; width: 700px; height: 620px; opacity: .78; }
+      .corner-lines i { position: absolute; width: 780px; height: 780px; border: 2px solid rgba(118, 153, 255, .55); border-radius: 50%; }
+      .corner-lines.left { top: -390px; left: -410px; }
+      .corner-lines.right { right: -410px; bottom: -390px; transform: rotate(180deg); }
+      .corner-lines i:nth-child(2) { inset: 32px auto auto 32px; border-color: rgba(124, 136, 249, .51); }
+      .corner-lines i:nth-child(3) { inset: 64px auto auto 64px; border-color: rgba(138, 120, 245, .47); }
+      .corner-lines i:nth-child(4) { inset: 96px auto auto 96px; border-color: rgba(154, 108, 239, .43); }
+      .corner-lines i:nth-child(5) { inset: 128px auto auto 128px; border-color: rgba(172, 100, 237, .39); }
+      .corner-lines i:nth-child(6) { inset: 160px auto auto 160px; border-color: rgba(190, 98, 239, .35); }
+      .corner-lines i:nth-child(7) { inset: 192px auto auto 192px; border-color: rgba(208, 100, 239, .31); }
+
+      .wordmark {
+        display: grid;
+        justify-items: center;
+        gap: 38px;
+        padding: 70px 130px;
+        text-align: center;
+      }
+
+      /* Homepage wordmark styling, enlarged only for the 16:9 share canvas. */
+      .wordmark strong {
+        margin: 0;
+        background: linear-gradient(100deg, #8ec2ff 0%, #a0a3ff 47%, #d1a6ff 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        font-size: 174px;
+        font-weight: 900;
+        letter-spacing: -.09em;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      .wordmark span {
+        color: #d5ddfa;
+        font-family: Arial, sans-serif;
+        font-size: 43px;
+        font-weight: 500;
+        letter-spacing: .34em;
+        line-height: 1;
+        padding-left: .34em;
+      }
+
+      .wordmark i {
+        display: block;
+        width: 850px;
+        height: 4px;
+        background: linear-gradient(90deg, transparent, #8ec2ff 13%, #a6a5ff 50%, #d1a6ff 87%, transparent);
+      }
+
+      .tagline {
+        margin: 52px 0 0;
+        color: #fff;
+        font-size: 48px;
+        font-weight: 750;
+        letter-spacing: -.06em;
+        line-height: 1.45;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="og-card">
+      <div class="corner-lines left" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <section class="wordmark" aria-label="시니어 라이프 뉴스">
+        <strong>시니어 라이프 뉴스</strong>
+        <span>SENIOR LIFE NEWS</span>
+        <i aria-hidden="true"></i>
+        <p class="tagline">오늘을 더 잘 살고, 내일을 든든하게 준비하는 뉴스</p>
+      </section>
+      <div class="corner-lines right" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </main>
+  </body>
+</html>
