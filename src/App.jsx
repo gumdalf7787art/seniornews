@@ -1,6 +1,7 @@
 import { Component, lazy, Suspense, useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import NewsLayout from './components/NewsLayout';
+import PageMetadata from './components/PageMetadata';
 import Login from './components/Login';
 import SignUp from './components/SignUp';
 import KakaoCallback from './components/KakaoCallback';
@@ -139,6 +140,7 @@ export default function App() {
   return (
     <AppErrorBoundary>
       <ScrollToTop />
+      <PageMetadata />
       <Suspense fallback={<Loading />}>
         <Routes>
           <Route element={<NewsLayout user={user} />}>

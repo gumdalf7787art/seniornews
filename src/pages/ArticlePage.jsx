@@ -6,6 +6,7 @@ import NewsSidebar from '../components/NewsSidebar';
 import { categoryName } from '../data/articles';
 import { fetchPublishedArticles, normalizeArticle } from '../utils/publicArticles';
 import { saveRecentArticle } from '../utils/readerPreferences';
+import { SITE_ORIGIN } from '../../shared/seo.js';
 
 function safeInlineHtml(value = '') {
   if (typeof document === 'undefined') return '';
@@ -61,10 +62,30 @@ export default function ArticlePage({ user }) {
         }).catch(() => []),
       ]);
     }).then(([items, allItems, activeBanners]) => { setRelated(items.filter((item) => item.slug !== slug).slice(0, 3)); setSidebarArticles(allItems); setBanners(activeBanners); }).catch(() => setArticle(null)).finally(() => setLoading(false));
-    return () => { document.title = '시니어 라이프 뉴스 | 오늘을 더 정확하고 쉽게'; };
+
   }, [slug]);
 
   useEffect(() => () => { window.speechSynthesis?.cancel(); }, []);
+  useEffect(() => {
+    if (!article || article.slug !== slug) return;
+    const canonicalUrl = `${SITE_ORIGIN}/article/${encodeURIComponent(slug)}`;
+    for (const [attribute, name, value] of [
+      ['name', 'description', article.summary],
+      ['name', 'twitter:title', article.title],
+      ['name', 'twitter:description', article.summary],
+      ['property', 'og:title', article.title],
+      ['property', 'og:description', article.summary],
+      ['property', 'og:url', canonicalUrl],
+      ['property', 'og:type', 'article'],
+    ]) {
+      let meta = document.head.querySelector(`meta[${attribute}="${name}"]`);
+      if (!meta) { meta = document.createElement('meta'); meta.setAttribute(attribute, name); document.head.append(meta); }
+      meta.content = value || '';
+    }
+    let canonical = document.head.querySelector('link[rel="canonical"]');
+    if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.append(canonical); }
+    canonical.href = canonicalUrl;
+  }, [article, slug]);
   useEffect(() => {
     if (!article) return undefined;
     const updateProgress = () => {

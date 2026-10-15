@@ -12,7 +12,7 @@ const article = {
 };
 const DB = { prepare: () => ({
   all: async () => ({ results: [article] }),
-  bind: () => ({ first: async () => article }),
+  bind: () => ({ first: async () => article, all: async () => ({ results: [article] }) }),
 }) };
 const html = '<html><head><title>뉴스</title><meta property="og:url" content="https://seniorlifenews.pages.dev/"></head><body><div id="root"></div></body></html>';
 const context = (path) => ({
