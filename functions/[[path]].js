@@ -1,12 +1,26 @@
+import { PUBLIC_SITE_ORIGIN } from './api/utils/site.js';
+
 function escapeHtml(value=''){return String(value).replace(/[&<>'"]/g,(char)=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));}
 function replaceMeta(html,name,value,property=false){const attribute=property?'property':'name';const expression=new RegExp(`<meta\\s+${attribute}=["']${name}["'][^>]*>`,'i');const tag=`<meta ${attribute}="${name}" content="${escapeHtml(value)}">`;return expression.test(html)?html.replace(expression,tag):html.replace('</head>',`${tag}</head>`);}
 
+async function withPageCanonical(response, pathname) {
+  if (!response.ok || !response.headers.get('Content-Type')?.includes('text/html')) return response;
+  const canonical = `${PUBLIC_SITE_ORIGIN}${pathname}`;
+  let html = await response.text();
+  html = replaceMeta(html, 'og:url', canonical, true);
+  html = html.replace('</head>', `<link rel="canonical" href="${escapeHtml(canonical)}"></head>`);
+  const headers = new Headers(response.headers);
+  headers.delete('Content-Length');
+  headers.delete('ETag');
+  return new Response(html, { status: response.status, headers });
+}
+
 export async function onRequest(context){
-  const url=new URL(context.request.url); const match=url.pathname.match(/^\/article\/([^/]+)$/); if(!match||!context.env.DB)return context.next();
+  const url=new URL(context.request.url); const match=url.pathname.match(/^\/article\/([^/]+)$/); if(!match||!context.env.DB)return withPageCanonical(await context.next(), url.pathname);
   const article=await context.env.DB.prepare("SELECT a.title,a.summary,a.body_text,a.image_url,a.image_alt,a.published_at,a.updated_at,a.source_text,c.name category_name,u.name author_name FROM articles a JOIN categories c ON c.id=a.category_id JOIN users u ON u.id=a.author_id WHERE a.slug=? AND a.status='published' AND a.published_at<=CURRENT_TIMESTAMP").bind(decodeURIComponent(match[1])).first();
   if(!article)return context.next();
   const asset=await context.next(); if(!asset.headers.get('Content-Type')?.includes('text/html'))return asset;
-  let html=await asset.text(); const canonical=`${url.origin}${url.pathname}`; const defaultImage=`${url.origin}/images/og-senior-life-news.png`; const socialImage=article.image_url||defaultImage; const paragraphs=article.body_text.split(/\n+/).filter(Boolean).map((text)=>`<p>${escapeHtml(text)}</p>`).join('');
+  let html=await asset.text(); const canonical=`${PUBLIC_SITE_ORIGIN}${url.pathname}`; const defaultImage=`${PUBLIC_SITE_ORIGIN}/images/og-senior-life-news.png`; const socialImage=article.image_url||defaultImage; const paragraphs=article.body_text.split(/\n+/).filter(Boolean).map((text)=>`<p>${escapeHtml(text)}</p>`).join('');
   const serverArticle=`<article data-server-rendered="true"><p>${escapeHtml(article.category_name)}</p><h1>${escapeHtml(article.title)}</h1><p>${escapeHtml(article.summary)}</p><p>${escapeHtml(article.author_name)} · ${escapeHtml(article.published_at)}</p>${article.image_url?`<img src="${escapeHtml(article.image_url)}" alt="${escapeHtml(article.image_alt||'')}">`:''}<div>${paragraphs}</div></article>`;
   html=html.replace(/<title>.*?<\/title>/i,`<title>${escapeHtml(article.title)} | 시니어 라이프 뉴스</title>`).replace('<div id="root"></div>',`<div id="root">${serverArticle}</div>`);
   html=replaceMeta(html,'description',article.summary); html=replaceMeta(html,'og:title',article.title,true); html=replaceMeta(html,'og:description',article.summary,true); html=replaceMeta(html,'og:type','article',true); html=replaceMeta(html,'og:url',canonical,true); html=replaceMeta(html,'og:image',socialImage,true); html=replaceMeta(html,'og:image:alt',article.image_alt||`${article.title} | 시니어 라이프 뉴스`,true); html=replaceMeta(html,'twitter:card','summary_large_image'); html=replaceMeta(html,'twitter:title',article.title); html=replaceMeta(html,'twitter:description',article.summary); html=replaceMeta(html,'twitter:image',socialImage);

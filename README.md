@@ -2,6 +2,10 @@
 
 50~70대 독자를 위한 편집형 온라인 뉴스 MVP입니다. React/Vite 프런트엔드와 Cloudflare Pages Functions, D1, R2를 사용합니다.
 
+공식 운영 주소: https://seniorlifenews.co.kr (연구소: https://seniorlifenews.co.kr/lab)
+
+검색엔진용 대표 주소, 사이트맵, RSS는 공식 도메인을 사용합니다. `www` 자동 이동은 Cloudflare Redirect Rules에서 관리합니다. 로그인 콜백은 접속한 출처를 사용해 세션을 유지하며, 카카오·네이버 개발자센터에는 공식 도메인의 콜백 주소를 등록합니다. 과거 SESSION_SUMMARY 문서의 배포 주소는 당시 기록입니다.
+
 ## 주요 기능
 
 - 주요·최신·카테고리·인기 뉴스, 검색, 기사 상세

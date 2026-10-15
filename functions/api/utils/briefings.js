@@ -21,7 +21,7 @@ export function validateBriefing(data) {
   if (!category || !message || !targetUrl) return '분류, 알림 문구, 연결 주소를 모두 입력해 주세요.';
   if (message.length > 120) return '알림 문구는 120자 이내로 입력해 주세요.';
   try {
-    const url = new URL(targetUrl, 'https://seniorlifenews.pages.dev');
+    const url = new URL(targetUrl, 'https://seniorlifenews.co.kr');
     if (!['http:', 'https:'].includes(url.protocol)) throw new Error();
   } catch {
     return '연결 주소를 확인해 주세요.';

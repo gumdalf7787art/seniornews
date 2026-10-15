@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin
 Disallow: /mypage
 Disallow: /api/
-Sitemap: /sitemap.xml
+Sitemap: https://seniorlifenews.co.kr/sitemap.xml

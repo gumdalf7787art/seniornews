@@ -1,10 +1,10 @@
 # 시니어 라이프 뉴스 · 시니어 라이프 연구소 디자인 및 작업 인수인계
 
-최종 갱신: 2026-09-01  
-운영 주소: `https://seniorlifenews.pages.dev`  
+최종 갱신: 2026-10-15 (운영 도메인 갱신)
+운영 주소: `https://seniorlifenews.co.kr`
 저장소: `gumdalf7787art/seniornews` (`main`)
 
-> 운영 대상은 `seniorlifenews.pages.dev` 하나다. `seniornews.pages.dev`는 사용하지 않는다.
+> 공식 운영 주소는 `https://seniorlifenews.co.kr`이며, 연구소는 `/lab`이다. `www` 주소는 공식 주소로 301 이동한다. Cloudflare Pages 프로젝트명은 `seniorlifenews`로 유지한다.
 > API 키, OAuth 시크릿, JWT 값 등 비밀값은 이 문서나 Git에 기록하지 않고 Cloudflare Pages의 **Variables and secrets**에서만 관리한다.
 
 ---
