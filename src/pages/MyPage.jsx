@@ -37,6 +37,8 @@ export default function MyPage({ user, setUser }) {
   const [accountFeedback, setAccountFeedback] = useState('');
   const [accountError, setAccountError] = useState(false);
   const [savingAccount, setSavingAccount] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState('');
 
   const bookmarkedArticles = useMemo(() => bookmarks.map(asArticle), [bookmarks]);
 
@@ -51,9 +53,19 @@ export default function MyPage({ user, setUser }) {
   useEffect(() => setAccountName(user.name || ''), [user.name]);
 
   const logout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include', headers: { 'X-Requested-With': 'SeniorNews' } });
-    setUser(null);
-    navigate('/');
+    if (loggingOut) return;
+    setLoggingOut(true);
+    setLogoutError('');
+    try {
+      const response = await fetch('/api/auth/logout', { method: 'POST', credentials: 'include', headers: { 'X-Requested-With': 'SeniorNews' } });
+      if (!response.ok) throw new Error('Logout failed');
+      setUser(null);
+      navigate('/', { replace: true });
+    } catch {
+      setLogoutError('로그아웃하지 못했습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.');
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   const withdraw = async () => {
@@ -125,8 +137,12 @@ export default function MyPage({ user, setUser }) {
   return <div className="container mypage">
     <div className="mypage-welcome">
       <div><p className="eyebrow">나의 시니어 라이프 뉴스</p><h1>{user.name}님, 반갑습니다.</h1><p>필요한 뉴스를 저장하고, 편한 방식으로 읽어보세요.</p></div>
-      <span className="role-badge">{ROLE_LABELS[user.role] || '일반회원'}</span>
+      <div className="mypage-welcome-actions">
+        <span className="role-badge">{ROLE_LABELS[user.role] || '일반회원'}</span>
+        <button type="button" className="secondary-button" onClick={logout} disabled={loggingOut}><LogOut size={18} aria-hidden="true" />{loggingOut ? '로그아웃 중…' : '로그아웃'}</button>
+      </div>
     </div>
+    {logoutError && <p className="account-feedback error" role="alert">{logoutError}</p>}
 
     <div className="mypage-layout">
       <nav className="profile-nav" aria-label="마이페이지 메뉴">
@@ -151,7 +167,7 @@ export default function MyPage({ user, setUser }) {
 
         {tab === 'recent' && <><div className="panel-heading"><div><h2>최근 본 기사</h2><p>이 기기에서 최근에 읽은 기사입니다.</p></div>{recentArticles.length > 0 && <button className="text-button" onClick={clearRecent}>기록 지우기</button>}</div>{recentArticles.length ? <div className="saved-article-list">{recentArticles.map((article) => <div key={article.slug} className="saved-article"><ArticleCard article={article} compact /><time className="viewed-date">읽은 시간 {new Date(article.viewedAt).toLocaleDateString('ko-KR')}</time></div>)}</div> : <EmptyState title="최근 본 기사가 없습니다." description="기사를 읽으면 최근 본 기사 목록에 자동으로 표시됩니다." action={<Link className="primary-button" to="/">뉴스 둘러보기</Link>} />}</>}
 
-        {tab === 'account' && <><div className="panel-heading"><div><h2>회원정보·계정</h2><p>이름과 비밀번호를 직접 관리할 수 있습니다.</p></div></div><div className="account-details"><div><span>이메일</span><strong>{user.email || '-'}</strong></div><div><span>회원 구분</span><strong>{ROLE_LABELS[user.role] || '일반회원'}</strong></div></div><div className="account-forms"><form onSubmit={submitNameChange}><h3>이름 변경</h3><label className="field"><span>이름</span><input value={accountName} onChange={(event) => setAccountName(event.target.value)} maxLength="40" required /></label><button className="secondary-button" disabled={savingAccount}>이름 저장</button></form><form onSubmit={submitPasswordChange}><h3>비밀번호 변경</h3><label className="field"><span>현재 비밀번호</span><input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} autoComplete="current-password" required /></label><label className="field"><span>새 비밀번호</span><input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} autoComplete="new-password" minLength="10" required /></label><label className="field"><span>새 비밀번호 확인</span><input type="password" value={passwordConfirm} onChange={(event) => setPasswordConfirm(event.target.value)} autoComplete="new-password" minLength="10" required /></label><small>영문·숫자를 포함해 10자 이상 사용해 주세요.</small><button className="primary-button" disabled={savingAccount}>비밀번호 변경</button></form></div>{accountFeedback && <p className={`account-feedback ${accountError ? 'error' : ''}`} role="status">{accountFeedback}</p>}<div className="account-actions"><button className="secondary-button" onClick={logout}><LogOut size={18} />로그아웃</button><button className="danger-button" onClick={withdraw}>회원 탈퇴</button></div></>}
+        {tab === 'account' && <><div className="panel-heading"><div><h2>회원정보·계정</h2><p>이름과 비밀번호를 직접 관리할 수 있습니다.</p></div></div><div className="account-details"><div><span>이메일</span><strong>{user.email || '-'}</strong></div><div><span>회원 구분</span><strong>{ROLE_LABELS[user.role] || '일반회원'}</strong></div></div><div className="account-forms"><form onSubmit={submitNameChange}><h3>이름 변경</h3><label className="field"><span>이름</span><input value={accountName} onChange={(event) => setAccountName(event.target.value)} maxLength="40" required /></label><button className="secondary-button" disabled={savingAccount}>이름 저장</button></form><form onSubmit={submitPasswordChange}><h3>비밀번호 변경</h3><label className="field"><span>현재 비밀번호</span><input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} autoComplete="current-password" required /></label><label className="field"><span>새 비밀번호</span><input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} autoComplete="new-password" minLength="10" required /></label><label className="field"><span>새 비밀번호 확인</span><input type="password" value={passwordConfirm} onChange={(event) => setPasswordConfirm(event.target.value)} autoComplete="new-password" minLength="10" required /></label><small>영문·숫자를 포함해 10자 이상 사용해 주세요.</small><button className="primary-button" disabled={savingAccount}>비밀번호 변경</button></form></div>{accountFeedback && <p className={`account-feedback ${accountError ? 'error' : ''}`} role="status">{accountFeedback}</p>}<div className="account-actions"><button type="button" className="secondary-button" onClick={logout} disabled={loggingOut}><LogOut size={18} aria-hidden="true" />{loggingOut ? '로그아웃 중…' : '로그아웃'}</button><button className="danger-button" onClick={withdraw}>회원 탈퇴</button></div></>}
       </section>
     </div>
   </div>;

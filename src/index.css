@@ -242,6 +242,8 @@ main { flex: 1; }
 .mypage { padding-top: 48px; }
 .mypage-welcome { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; padding: 30px 34px; background: var(--green-100); border-top: 4px solid var(--green-900); margin-bottom: 30px; }
 .mypage-welcome .eyebrow { margin: 0 0 5px; }
+.mypage-welcome-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; flex-shrink: 0; }
+.mypage-welcome-actions .secondary-button { min-height: 48px; white-space: nowrap; }
 .mypage-welcome h1 { margin: 0; font-size: clamp(30px, 4vw, 42px); letter-spacing: -1.7px; line-height: 1.25; }
 .mypage-welcome p:not(.eyebrow) { margin: 10px 0 0; color: var(--ink-subtle); }
 .role-badge, .count-label { display: inline-flex; align-items: center; justify-content: center; border-radius: 100px; font-weight: 800; }
