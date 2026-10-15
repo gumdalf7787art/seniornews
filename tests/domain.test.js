@@ -32,7 +32,7 @@ test('home and lab canonical URLs use the official domain even on the old host',
 test('article metadata and fallback image use the official domain', async () => {
   const body = await (await onRequest(context('/article/sample-news'))).text();
   assert.ok(body.includes(`"mainEntityOfPage":"${origin}/article/sample-news"`));
-  assert.ok(body.includes(`${origin}/images/og-senior-life-news.png`));
+  assert.ok(body.includes(`${origin}/images/og-senior-life-news-v3.png`));
   assert.equal((body.match(/rel="canonical"/g) || []).length, 1);
   assert.ok(!body.includes('pages.dev'));
 });
