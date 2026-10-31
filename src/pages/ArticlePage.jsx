@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Bookmark, Share2, Volume2, Square } from 'lucide-react';
 import ArticleCard from '../components/ArticleCard';
@@ -104,6 +104,13 @@ export default function ArticlePage({ user }) {
   if (loading) return <div className="empty-state"><p>기사를 불러오는 중입니다.</p></div>;
   if (!article) return <div className="empty-state"><h1>기사를 찾을 수 없습니다.</h1><Link className="primary-button" to="/">홈으로 돌아가기</Link></div>;
 
+  // Place the lead image at a section boundary near the middle, without repeating inline images.
+  const hasInlineLead = article.body.some(block => block.type === 'image' && (block.url || block.attrs?.src) === article.image);
+  const middle = Math.ceil(article.body.length / 2);
+  const sectionBoundary = article.body.findIndex((block, index) => index >= middle && ['heading', 'sectionTitle'].includes(block.type));
+  const imageIndex = sectionBoundary >= 0 ? sectionBoundary : Math.min(middle, article.body.length);
+  const leadImage = article.image && !hasInlineLead ? <figure className="article-lead-figure"><img src={article.image} alt={article.imageAlt} loading="lazy" decoding="async" sizes="(max-width: 767px) 100vw, 780px" />{article.editorial?.hero_caption && <figcaption>{article.editorial.hero_caption}</figcaption>}</figure> : null;
+
   const toggleBookmark = async () => {
     if (!user) { window.location.href = `/login?next=/article/${article.slug}`; return; }
     const next = !bookmarked;
@@ -118,9 +125,7 @@ export default function ArticlePage({ user }) {
       <article className="article-wrap">
         <header className="article-header"><Link className="eyebrow" to={`/category/${article.category}`}>{categoryName(article.category)}</Link><h1>{article.title}</h1><p className="article-deck">{article.summary}</p><div className="meta"><strong>{article.author}</strong><time>입력 {article.publishedAt}</time>{article.updatedAt && <time>수정 {article.updatedAt}</time>}</div></header>
         <div className="article-tools"><button className="tool-button" onClick={toggleBookmark}><Bookmark size={19} fill={bookmarked ? 'currentColor' : 'none'} /> {bookmarked ? '저장됨' : '기사 저장'}</button>{speechSupported && <button className="tool-button" onClick={toggleSpeech}>{speaking ? <Square size={18} /> : <Volume2 size={20} />} {speaking ? '읽기 멈춤' : '기사 읽어주기'}</button>}<button className="tool-button" onClick={share}><Share2 size={19} /> 공유하기</button></div>
-        {article.image && <img className="hero-image" src={article.image} alt={article.imageAlt} fetchPriority="high" decoding="async" sizes="(max-width: 767px) 100vw, 780px" />}
-        {article.image && article.editorial?.hero_caption && <p className="article-image-caption">{article.editorial.hero_caption}</p>}
-        <div className="article-body">{article.body.map((block, index) => <BodyBlock key={block.id || index} block={block} />)}{['health', 'life-finance'].includes(article.category) && <p className="article-disclaimer"><strong>※ 이 기사는 일반적인 정보 제공을 목적으로 하며 개인의 의료 진단이나 금융 자문을 대신하지 않습니다.</strong></p>}</div>
+        <div className="article-body">{article.body.map((block, index) => <Fragment key={block.id || index}>{index === imageIndex && leadImage}<BodyBlock block={block} /></Fragment>)}{imageIndex === article.body.length && leadImage}{['health', 'life-finance'].includes(article.category) && <p className="article-disclaimer"><strong>※ 이 기사는 일반적인 정보 제공을 목적으로 하며 개인의 의료 진단이나 금융 자문을 대신하지 않습니다.</strong></p>}</div>
         <div className="article-source">{article.source_text && <div><strong>출처·참고자료</strong>{article.source_text.split('\n').filter(Boolean).map((line, i) => <p key={i}>{/^https?:\/\/[^\s]+$/.test(line) ? <a href={line} target="_blank" rel="noopener noreferrer">{line}</a> : line}</p>)}</div>}<p><strong>{article.author}</strong> | 공용 이메일 contact@mediproper.com</p><p>저작권자 © 시니어 라이프 뉴스 무단전재 및 재배포, AI학습 및 활용 금지</p></div>
         <NewsSidebar className="mobile-article-sidebar mobile-popular-sidebar" excludeId={article.id} showLatest={false} articles={sidebarArticles} />
         {related.length > 0 && <section className="related"><div className="section-heading"><h2>함께 읽으면 좋은 기사</h2></div><div className="news-grid">{related.map((item) => <ArticleCard key={item.id} article={item} />)}</div></section>}

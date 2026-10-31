@@ -1431,3 +1431,13 @@ main { flex: 1; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
 }
+
+/* Keep image captions visually attached to the image and separate from article prose. */
+.article-body figure { margin: 1.6em 0 2em; }
+.article-body figure img { display: block; width: 100%; height: auto; }
+.article-body figure figcaption { margin: 6px 0 0; padding: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.article-body .article-section-title { font-size: calc(1em + 1pt); font-weight: 800; line-height: 1.5; margin: 1.7em 0 .7em; }
+@media (max-width: 767px) {
+  .article-body figure { margin: 1.6em -16px 2em; }
+  .article-body figure figcaption { padding-inline: 16px; }
+}
