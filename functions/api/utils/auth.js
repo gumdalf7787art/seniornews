@@ -18,8 +18,10 @@ export async function currentUser(context) {
   return context.env.DB.prepare('SELECT id, email, name, role, status, provider, password_hash FROM users WHERE id = ? AND status = ?').bind(payload.sub, 'active').first();
 }
 
+export const AUTOMATION_USER = Symbol('verified newsroom API user');
+
 export async function requireUser(context, roles = []) {
-  const user = await currentUser(context);
+  const user = context[AUTOMATION_USER] || await currentUser(context);
   if (!user) return { error: json({ success: false, message: '로그인이 필요합니다.' }, 401) };
   if (roles.length && !roles.includes(user.role)) return { error: json({ success: false, message: '이 작업을 수행할 권한이 없습니다.' }, 403) };
   return { user };

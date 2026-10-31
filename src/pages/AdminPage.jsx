@@ -1,4 +1,5 @@
 import { importEditorialPackage } from "../../shared/editorial.js";
+import AutomationAccess from "../components/AutomationAccess";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -475,6 +476,7 @@ export default function AdminPage({ user }) {
 
   return (
     <div className="container newsroom-admin">
+      {isCreator && <AutomationAccess />}
       <div className="admin-hero">
         <div>
           <p className="eyebrow">{displayRole} 업무 공간</p>
