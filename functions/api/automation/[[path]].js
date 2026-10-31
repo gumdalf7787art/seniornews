@@ -1,7 +1,7 @@
 import { json, requireUser, verifyMutationRequest, audit, AUTOMATION_USER } from '../utils/auth.js';
 import { onRequestPost as createArticle } from '../admin/articles/index.js';
 import { onRequestPatch as updateArticle } from '../admin/articles/[id]/index.js';
-import { validReview, SCOPES, sha256, approvedKey, articlePayload, articleHash } from '../../../shared/automation.js';
+import { sourceDisplay, validReview, SCOPES, sha256, approvedKey, articlePayload, articleHash } from '../../../shared/automation.js';
 
 const schema = `CREATE TABLE IF NOT EXISTS editorial_api_keys (
  id TEXT PRIMARY KEY, token_hash TEXT NOT NULL UNIQUE, name TEXT NOT NULL,
@@ -117,6 +117,13 @@ export async function onRequest(context) {
     }
     const a=await owned(context,key,path[1]);if(!a)return failure('기사 없음',404);
     if(d.expected_hash!==await articleHash(a))return failure('원고가 변경되었습니다. 다시 검토하세요',409);
+    if(path[2]==='source-display'&&method==='POST'){
+      const display=sourceDisplay(d.source_display,(a.source_text||'').split('\n').map(s=>s.trim()).filter(Boolean));
+      const doc=JSON.parse(a.body_json);doc.editorial={...doc.editorial,source_display:display};
+      const result=await context.env.DB.prepare("UPDATE articles SET body_json=?,updated_at=strftime('%Y-%m-%d %H:%M:%f','now') WHERE id=? AND updated_at=? AND body_json=?").bind(JSON.stringify(doc),a.id,a.updated_at,a.body_json).run();
+      if(result.meta.changes!==1)return failure('동시 변경 감지',409);
+      await audit(context.env,user.id,'api_source_display','article',a.id,{key_id:key.id,source_display:display});return json({success:true,status:a.status});
+    }
     if(method==='PATCH'&&!path[2]){
       if(a.status==='published')return failure('공개·예약 기사는 먼저 예약 해제/편집 절차 확인',409);
       const payload=articlePayload(d);if(payload.slug!==a.slug)return failure('기사 ID 변경 불가');

@@ -85,3 +85,17 @@ test('plain text import escapes HTML and demands image rights',()=>{
   assert.equal(content[0].text,'<script>evil</script>');
   d.article.images=[{url:'https://media.example.org/x.png',alt:'x',caption:'photo',kind:'photo'}];assert.throws(()=>articlePayload(d));
 });
+
+test('source display edit preserves published content, attribution and internal evidence',async()=>{
+  const s=await setup();try{await s.active();s.payload.article.sources=['https://example.org/official','https://example.org/evidence'];const c=await s.call('articles','POST',s.payload);
+    s.sql.prepare("UPDATE articles SET status='published',published_at=CURRENT_TIMESTAMP WHERE id=?").run(c.body.id);
+    const before=(await s.call('articles/'+c.body.id)).body;
+    const d={expected_hash:before.content_hash,source_display:[{label:'Official report',url:'https://example.org/official'}]};
+    assert.equal((await s.call(`articles/${c.body.id}/source-display`,'POST',{...d,source_display:[{label:'x',url:'https://evil.example'}]})).status,400);
+    assert.equal((await s.call(`articles/${c.body.id}/source-display`,'POST',d)).status,200);
+    const after=(await s.call('articles/'+c.body.id)).body.article;
+    for(const k of ['status','published_at','source_text','body_text','title','image_url'])assert.equal(after[k],before.article[k]);
+    const oldDoc=JSON.parse(before.article.body_json),doc=JSON.parse(after.body_json);assert.deepEqual(doc.content,oldDoc.content);assert.equal(doc.editorial.hero_caption,oldDoc.editorial.hero_caption);assert.deepEqual(doc.editorial.source_display,d.source_display);
+    assert.equal((await s.call(`articles/${c.body.id}/source-display`,'POST',d)).status,409);
+  }finally{s.sql.close();}
+});

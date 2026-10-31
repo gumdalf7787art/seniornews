@@ -27,7 +27,7 @@ export function articlePayload(data) {
   const hero = images.find(im => im.url === a.hero_image);
   const content = a.body.split(/\n{2,}/).filter(Boolean).map(text => ({type:text.startsWith('## ')?'sectionTitle':'paragraph',text:text.replace(/^## /,''),html:esc(text.replace(/^## /,'')),...(text.startsWith('## ')?{attrs:{variant:'bar'}}:{})}));
   for (const im of images.filter(im => im.url !== a.hero_image)) content.push({type:'image',attrs:{src:im.url,alt:im.alt,caption:im.caption}});
-  const editorial = {author_name:'시니어 라이프 뉴스',article_id:data.external_id,automation:true,test_only:data.test_only===true,seo_title:String(a.seo_title||a.title),meta_description:String(a.meta_description||a.summary),subtitle:String(a.subtitle||''),tags:Array.isArray(a.tags)?a.tags:[],hero_caption:hero?.caption||''};
+  const editorial = {author_name:'시니어 라이프 뉴스',article_id:data.external_id,automation:true,test_only:data.test_only===true,seo_title:String(a.seo_title||a.title),meta_description:String(a.meta_description||a.summary),subtitle:String(a.subtitle||''),tags:Array.isArray(a.tags)?a.tags:[],hero_caption:hero?.caption||'',source_display:sourceDisplay(a.source_display || [],a.sources)};
   return {title:a.title.trim(),slug:'newsroom-'+data.external_id,summary:a.summary.trim(),category:a.cms_category,body_json:JSON.stringify({type:'doc',version:2,editorial,content}),body_text:content.filter(b=>b.type!=='image').map(b=>b.text).join('\n\n'),image_url:hero?.url||null,image_alt:hero?.alt||null,source_text:a.sources.join('\n'),status:'draft'};
 }
 export async function articleHash(a) {
@@ -39,4 +39,12 @@ export function validReview(r) {
   return !!r && typeof r.actor === 'string' && !!r.actor.trim() && Number.isFinite(Date.parse(r.at)) &&
     typeof r.selection_evidence === 'string' && !!r.selection_evidence.trim() &&
     REVIEW_CHECKS.every(k => r.checks?.[k]?.passed === true && typeof r.checks[k].note === 'string' && !!r.checks[k].note.trim());
+}
+
+export function sourceDisplay(value, sources) {
+  if (!Array.isArray(value) || value.length > 1) throw new Error('표시 출처는 0개 또는 1개여야 합니다');
+  return value.map(item => {
+    if (typeof item.label !== 'string' || !item.label.trim() || item.label.length > 300 || !/^https?:\/\//.test(item.url || '') || !sources.includes(item.url)) throw new Error('원자료 목록과 일치하는 출처 이름·URL 필요');
+    return {label:item.label.trim(),url:item.url};
+  });
 }
