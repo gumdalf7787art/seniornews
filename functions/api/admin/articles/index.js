@@ -1,3 +1,4 @@
+import { publicationError } from '../../../../shared/editorial.js';
 import { audit, json, requireUser, verifyMutationRequest } from '../../utils/auth.js';
 
 function validateImages(data) {
@@ -15,7 +16,7 @@ export async function onRequestGet(context) {
   const auth = await requireUser(context, ['editor', 'admin']);
   if (auth.error) return auth.error;
   const ownOnly = auth.user.role === 'editor';
-  const query = `SELECT a.id,a.title,a.slug,a.summary,a.body_json,a.body_text,a.image_url,a.image_alt,a.source_text,a.status,a.scheduled_at,a.published_at,a.created_at,a.updated_at,c.name category_name,c.slug category_slug,u.name author_name FROM articles a JOIN categories c ON c.id=a.category_id JOIN users u ON u.id=a.author_id ${ownOnly ? 'WHERE a.author_id=?' : ''} ORDER BY a.updated_at DESC LIMIT 100`;
+  const query = `SELECT a.id,a.title,a.slug,a.summary,a.body_json,a.body_text,a.image_url,a.image_alt,a.source_text,a.status,a.scheduled_at,a.published_at,a.created_at,a.updated_at,c.name category_name,c.slug category_slug,CASE WHEN json_valid(a.body_json) AND json_extract(a.body_json,'$.editorial.author_name')='시니어 라이프 뉴스' THEN '시니어 라이프 뉴스' ELSE u.name END author_name FROM articles a JOIN categories c ON c.id=a.category_id JOIN users u ON u.id=a.author_id ${ownOnly ? 'WHERE a.author_id=?' : ''} ORDER BY a.updated_at DESC LIMIT 100`;
   const statement = context.env.DB.prepare(query);
   const result = ownOnly ? await statement.bind(auth.user.id).all() : await statement.all();
   return json({ articles: result.results });
@@ -24,6 +25,7 @@ export async function onRequestGet(context) {
 export async function onRequestPost(context) {
   if (!verifyMutationRequest(context.request)) return json({ message: '잘못된 요청입니다.' }, 403); const auth = await requireUser(context, ['editor','admin']); if (auth.error) return auth.error; const data = await context.request.json();
   if (!data.title?.trim() || !/^[a-z0-9-]{3,}$/.test(data.slug || '') || !data.summary?.trim() || !data.body_text?.trim()) return json({ message: '제목, 영문 주소, 요약, 본문을 확인해 주세요.' }, 400);
+  const approvalError = publicationError(auth.user, data); if (approvalError) return json({ message: approvalError }, 403);
   const imageError = validateImages(data); if (imageError) return json({ message: imageError }, 400);
   const category = await context.env.DB.prepare('SELECT id FROM categories WHERE slug=? AND is_active=1').bind(data.category).first(); if (!category) return json({ message: '카테고리를 확인해 주세요.' }, 400);
   const status = ['review', 'published'].includes(data.status) ? data.status : 'draft';

@@ -1,3 +1,4 @@
+import { importEditorialPackage } from "../../shared/editorial.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -65,6 +66,7 @@ function statusClass(status) {
 }
 
 export default function AdminPage({ user }) {
+  const [scheduleAt, setScheduleAt] = useState("");
   const [items, setItems] = useState([]);
   const [view, setView] = useState("dashboard");
   const tabsRef = useRef(null);
@@ -106,7 +108,7 @@ export default function AdminPage({ user }) {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
-      setItems(data.articles || []);
+      setItems((data.articles || []).map((a) => ({ ...a, status: a.status === "published" && a.scheduled_at && Date.parse(a.scheduled_at.replace(" ", "T") + "Z") > Date.now() ? "scheduled" : a.status })));
     } catch (error) {
       setMessage(error.message || "기사 목록을 불러오지 못했습니다.");
     } finally {
@@ -193,6 +195,7 @@ export default function AdminPage({ user }) {
       image_url: article.image_url || "",
       image_alt: article.image_alt || "",
       source_text: article.source_text || "",
+      newsroom_meta: (() => { try { return JSON.parse(article.body_json || "{}").editorial; } catch { return undefined; } })(),
     });
     setEditingId(article.id);
     setPendingImage(null);
@@ -214,7 +217,8 @@ export default function AdminPage({ user }) {
       ...form,
       slug: form.slug || makeSlug(form.title),
       status,
-      body_json: bodyJson,
+      body_json: JSON.stringify({ ...JSON.parse(bodyJson), editorial: form.newsroom_meta }),
+      editorial_approved: status === "published" && isCreator,
       body_text: bodyText,
     };
     if (payload.slug !== form.slug)
@@ -327,10 +331,10 @@ export default function AdminPage({ user }) {
     }
   };
 
-  const publish = async (article) => {
+  const publish = async (article, scheduledAt = null) => {
     if (
       !window.confirm(
-        `“${article.title}” 기사를 지금 ${isCreator ? "발행" : "직접 발행"}할까요?`,
+        `“${article.title}” 원고를 승인하고 ${scheduledAt ? "지정 시각에 예약 공개" : "지금 공개"}할까요?`,
       )
     )
       return;
@@ -340,13 +344,14 @@ export default function AdminPage({ user }) {
         {
           method: "POST",
           credentials: "include",
-          headers: { "X-Requested-With": "SeniorNews" },
+          headers: { "X-Requested-With": "SeniorNews", "Content-Type": "application/json" },
+          body: JSON.stringify({ editorial_approved: true, expected_updated_at: article.updated_at, scheduled_at: scheduledAt }),
         },
       );
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
       setMessage(
-        isCreator ? "기사를 발행했습니다." : "기사를 직접 발행했습니다.",
+        scheduledAt ? "예약 공개를 등록했습니다." : "기사를 발행했습니다.",
       );
       await loadArticles();
     } catch (error) {
@@ -617,7 +622,7 @@ export default function AdminPage({ user }) {
                         <Pencil size={17} />
                         수정
                       </button>
-                      {["draft", "review", "scheduled"].includes(
+                      {isCreator && ["draft", "review"].includes(
                         article.status,
                       ) && (
                         <button
@@ -710,6 +715,22 @@ export default function AdminPage({ user }) {
               >
                 목록으로
               </button>
+            </div>
+            <div className="field">
+              <label htmlFor="editorial-package">검수 완료 기사 JSON 불러오기</label>
+              <input id="editorial-package" type="file" accept=".json,application/json" disabled={saving || uploading || !!editingId} onChange={async (event) => {
+                const file = event.target.files?.[0]; if (!file) return;
+                try {
+                  if (file.size > 5 * 1024 * 1024) throw new Error("5MB 이하 JSON을 선택해 주세요.");
+                  if (form.title && !window.confirm("현재 입력 내용을 새 패키지로 바꿀까요?")) return;
+                  const imported = importEditorialPackage(JSON.parse(await file.text()));
+                  if (!categories.some((c) => c.slug === imported.category)) throw new Error("홈페이지 카테고리를 확인해 주세요.");
+                  setForm(imported); setPendingImage(null); setImagePreviewUrl(""); setImageUploadStatus("");
+                  setMessage("원고를 불러왔습니다. 작성자 표시는 시니어 라이프 뉴스입니다. 이미지는 아래에서 선택하고, 저장 후 검토해 주세요.");
+                } catch (error) { setMessage(error.message); }
+                event.target.value = "";
+              }} />
+              <p>파일을 불러오는 것만으로 저장·공개되지 않습니다. 동일 기사 ID는 같은 주소를 사용해 중복 저장을 막습니다.</p>
             </div>
             <div className="field">
               <label htmlFor="title">기사 제목</label>
@@ -862,15 +883,28 @@ export default function AdminPage({ user }) {
               <button
                 className="primary-button direct-publish-button"
                 type="button"
-                disabled={saving}
+                disabled={saving || !isCreator}
                 onClick={() => save("published")}
               >
                 <CheckCircle2 size={18} />
-                직접 발행
+                관리자 승인 후 공개
               </button>
             </div>
           </form>
           <aside className="editor-guide">
+            {isCreator && editingId && <div className="field">
+              <label htmlFor="schedule-at">예약 공개 (이 컴퓨터의 현지 시간)</label>
+              <input id="schedule-at" type="datetime-local" value={scheduleAt} onChange={(e) => setScheduleAt(e.target.value)} />
+              <p>변경한 내용은 먼저 임시 저장한 뒤 다시 열어 확인하세요. 예약은 저장된 원고에 적용됩니다.</p>
+              <button type="button" disabled={!scheduleAt || saving} onClick={() => {
+                const article = items.find((a) => a.id === editingId);
+                const current = serializeBlocks(form.blocks);
+                if (!article || article.title !== form.title || article.summary !== form.summary || article.body_text !== current.bodyText || article.body_json !== JSON.stringify({...JSON.parse(current.bodyJson), editorial: form.newsroom_meta}) || article.slug !== form.slug || article.category_slug !== form.category || (article.source_text || "") !== form.source_text || (article.image_url || "") !== form.image_url || (article.image_alt || "") !== form.image_alt || pendingImage) { setMessage("변경한 내용을 먼저 저장한 뒤 다시 열어 주세요."); return; }
+                const when = new Date(scheduleAt); if (!Number.isFinite(when.getTime()) || when.getTime() <= Date.now()) { setMessage("미래 시각을 지정해 주세요."); return; }
+                void publish(article, when.toISOString());
+              }}>저장된 원고 승인·예약</button>
+            </div>}
+
             <div>
               <ImageUp size={24} />
               <h2>작성 전 확인</h2>

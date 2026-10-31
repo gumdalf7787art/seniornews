@@ -14,8 +14,10 @@ function parseBlocks(value, fallbackText = '') {
 
 export function normalizeArticle(article) {
   const blocks = parseBlocks(article.body_json, article.body_text);
+  let editorial = {}; try { editorial = JSON.parse(article.body_json || '{}').editorial || {}; } catch { /* Legacy content */ }
   return {
     ...article,
+    editorial,
     category: article.category_slug,
     image: article.image_url || '',
     imageAlt: article.image_alt || '',

@@ -122,14 +122,15 @@ export default function CreatorPage({ user }) {
   );
 
   const publish = async (article) => {
-    if (!window.confirm(`“${article.title}” 기사를 지금 공개할까요?`)) return;
+    if (!window.confirm(`“${article.title}” 원고를 승인하고 지금 공개할까요?`)) return;
     try {
       const response = await fetch(
         `/api/admin/articles/${article.id}/publish`,
         {
           method: "POST",
           credentials: "include",
-          headers: { "X-Requested-With": "SeniorNews" },
+          headers: { "X-Requested-With": "SeniorNews", "Content-Type": "application/json" },
+          body: JSON.stringify({ editorial_approved: true, expected_updated_at: article.updated_at }),
         },
       );
       const data = await response.json();
