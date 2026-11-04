@@ -67,7 +67,7 @@ export async function onRequest(context) {
       await context.env.DB.prepare('INSERT INTO editorial_api_keys(id,token_hash,name,scopes,requested_at,pair_expires_at,expires_at,ip_hash) VALUES(?,?,?,?,?,?,?,?)').bind(id,d.token_hash,d.name,SCOPES,iso(),until,null,ip).run();
       return json({pair_id:id,pair_expires_at:until,scopes:SCOPES},201);
     }
-    if(['connections','approve','revoke'].includes(path[0])) {
+    if(['connections','approve','revoke','enable-delete','disable-delete'].includes(path[0])) {
       if(method!=='GET'&&!verifyMutationRequest(context.request))return failure('잘못된 요청',403);
       const auth=await requireUser(context,['admin']); if(auth.error)return auth.error;
       if(path[0]==='connections'&&method==='GET'){
@@ -82,6 +82,13 @@ export async function onRequest(context) {
         await audit(context.env,auth.user.id,'api_connection_approve','api_key',d.id,{scopes:SCOPES});
         return json({success:true});
       }
+      if (['enable-delete','disable-delete'].includes(path[0]) && method === 'POST') {
+        const scopes = path[0] === 'enable-delete' ? SCOPES + ' articles:delete' : SCOPES;
+        const changed = await context.env.DB.prepare('UPDATE editorial_api_keys SET scopes=? WHERE id=? AND approved_by=? AND revoked_at IS NULL').bind(scopes,d.id,auth.user.id).run();
+        if (!changed.meta.changes) return failure('활성 연결 없음',404);
+        await audit(context.env,auth.user.id,path[0],'api_key',d.id);
+        return json({success:true});
+      }
       if(path[0]==='revoke'&&method==='POST'){
         await context.env.DB.prepare('UPDATE editorial_api_keys SET revoked_at=? WHERE id=? AND approved_by=?').bind(iso(),d.id,auth.user.id).run();
         await audit(context.env,auth.user.id,'api_connection_revoke','api_key',d.id);return json({success:true});
@@ -91,7 +98,7 @@ export async function onRequest(context) {
     const key=await tokenKey(context);
     if(path[0]==='status'&&method==='GET')return json({connected:approvedKey(key),state:!key?'unknown':key.revoked_at?'revoked':key.approved_by?(approvedKey(key)?'active':'expired'):key.pair_expires_at>iso()?'pending':'expired',expires_at:key?.expires_at||null,scopes:key?.scopes||null});
     if(!approvedKey(key))return failure('API 연결 승인·유효기간을 확인하세요',401);
-    if(key.scopes!==SCOPES)return failure('권한 범위 오류',403);
+    if(![SCOPES, SCOPES + ' articles:delete'].includes(key.scopes))return failure('권한 범위 오류',403);
     const user={id:key.approved_by,role:'admin',status:'active'};
     if(path[0]==='categories'&&method==='GET')return json({categories:(await context.env.DB.prepare('SELECT id,name,slug FROM categories WHERE is_active=1 ORDER BY display_order').all()).results});
     if(path[0]==='media'&&method==='POST')return mediaUpload(context,key);
@@ -117,6 +124,29 @@ export async function onRequest(context) {
     }
     const a=await owned(context,key,path[1]);if(!a)return failure('기사 없음',404);
     if(d.expected_hash!==await articleHash(a))return failure('원고가 변경되었습니다. 다시 검토하세요',409);
+    if (method === 'DELETE' && path.length === 2) {
+      if (!key.scopes.split(' ').includes('articles:delete')) return failure('관리자 화면에서 이 연결의 삭제 권한을 활성화하세요',403);
+      if (d.confirm_slug !== a.slug) return failure('삭제할 기사 주소가 일치하지 않습니다',400);
+      const result = await context.env.DB.prepare('DELETE FROM articles WHERE id=? AND author_id=? AND updated_at=? AND body_json=? AND status=?').bind(a.id,user.id,a.updated_at,a.body_json,a.status).run();
+      if (result.meta.changes !== 1) return failure('동시 변경 감지',409);
+      await audit(context.env,user.id,'api_delete','article',a.id,{slug:a.slug,key_id:key.id});
+      return json({success:true,id:a.id,status:'deleted'});
+    }
+    if (method === 'PATCH' && path.length === 2 && Object.hasOwn(d,'body_markdown')) {
+      if (typeof d.body_markdown !== 'string' || !d.body_markdown.trim() || d.body_markdown.length > 150000) return failure('본문 길이 확인 필요');
+      const doc = JSON.parse(a.body_json);
+      if (!Array.isArray(doc.content) || doc.content.some(b => !['paragraph','sectionTitle'].includes(b.type))) return failure('본문에 별도 이미지 또는 특수 블록이 있어 관리자 편집기를 사용하세요',409);
+      const content = d.body_markdown.trim().split(/\r?\n\s*\r?\n/).map(paragraph => {
+        const heading = paragraph.startsWith('## ');
+        const text = heading ? paragraph.slice(3) : paragraph;
+        const html = text.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+        return {type:heading?'sectionTitle':'paragraph',text,html,...(heading?{attrs:{variant:'bar'}}:{})};
+      });
+      const result = await context.env.DB.prepare("UPDATE articles SET body_json=?,body_text=?,updated_at=strftime('%Y-%m-%d %H:%M:%f','now') WHERE id=? AND author_id=? AND updated_at=? AND body_json=? AND status=?").bind(JSON.stringify({...doc,content}),content.map(b=>b.text).join('\n\n'),a.id,user.id,a.updated_at,a.body_json,a.status).run();
+      if (result.meta.changes !== 1) return failure('동시 변경 감지',409);
+      await audit(context.env,user.id,'api_edit_body','article',a.id,{key_id:key.id,previous_hash:d.expected_hash});
+      return json({success:true,id:a.id,status:a.status});
+    }
     if(path[2]==='source-display'&&method==='POST'){
       const display=sourceDisplay(d.source_display,(a.source_text||'').split('\n').map(s=>s.trim()).filter(Boolean));
       const doc=JSON.parse(a.body_json);doc.editorial={...doc.editorial,source_display:display};

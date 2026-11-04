@@ -99,3 +99,20 @@ test('source display edit preserves published content, attribution and internal 
     assert.equal((await s.call(`articles/${c.body.id}/source-display`,'POST',d)).status,409);
   }finally{s.sql.close();}
 });
+
+test('published revisions preserve metadata; permanent deletion requires separate grant, slug and current revision',async()=>{
+ const s=await setup();try {
+  const key=await s.active();const c=await s.call('articles','POST',s.payload);const path='articles/'+c.body.id;
+  s.sql.prepare("UPDATE articles SET status='published',published_at=CURRENT_TIMESTAMP WHERE id=?").run(c.body.id);
+  const before=(await s.call(path)).body;
+  assert.equal((await s.call(path,'PATCH',{expected_hash:before.content_hash,body_markdown:'## Heading\n\nCorrected <text>'})).status,200);
+  const after=(await s.call(path)).body;
+  assert.equal(after.article.published_at,before.article.published_at);assert.equal(after.article.status,'published');assert.deepEqual(JSON.parse(after.article.body_json).editorial,JSON.parse(before.article.body_json).editorial);
+  const del={expected_hash:after.content_hash,confirm_slug:after.article.slug};
+  assert.equal((await s.call(path,'DELETE',del)).status,403);
+  assert.equal((await s.call('enable-delete','POST',{id:key},'admin')).status,200);
+  assert.equal((await s.call(path,'DELETE',{...del,expected_hash:before.content_hash})).status,409);
+  assert.equal((await s.call(path,'DELETE',{...del,confirm_slug:'wrong'})).status,400);
+  assert.equal((await s.call(path,'DELETE',del)).status,200);assert.equal((await s.call(path)).status,404);
+ }finally{s.sql.close();}
+});
