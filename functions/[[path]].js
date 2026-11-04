@@ -1,5 +1,5 @@
 import { PUBLIC_SITE_ORIGIN } from './api/utils/site.js';
-import { publicPages, pageMetadata, pageTitle, pageSchema } from '../shared/seo.js';
+import { categoryPages, publicPages, pageMetadata, pageTitle, pageSchema } from '../shared/seo.js';
 
 function escapeHtml(value=''){return String(value).replace(/[&<>'"]/g,(char)=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));}
 function replaceMeta(html,name,value,property=false){const attribute=property?'property':'name';const expression=new RegExp(`<meta\\s+${attribute}=["']${name}["'][^>]*>`,'i');const tag=`<meta ${attribute}="${name}" content="${escapeHtml(value)}">`;return expression.test(html)?html.replace(expression,tag):html.replace('</head>',`${tag}</head>`);}
@@ -28,8 +28,9 @@ async function withPageCanonical(response, pathname, env) {
         console.error('Public page article rendering failed', error);
       }
     }
+    const directory = pathname === '/' ? '<section aria-label="분야별 뉴스"><dl>' + categoryPages.map(({path, name, description}) => `<dt><a href="${path}">${escapeHtml(name)}</a></dt><dd>${escapeHtml(description)}</dd>`).join('') + '</dl></section>' : '';
     const breadcrumbs = pathname === '/' ? '' : `<nav aria-label="현재 위치"><a href="/">시니어 라이프 뉴스</a> / ${escapeHtml(page.name)}</nav>`;
-    html = html.replace('<div id="root"></div>', `<div id="root"><div class="container"><nav aria-label="주요 메뉴">${links}</nav><main>${breadcrumbs}<h1>${escapeHtml(page.name)}</h1><p>${escapeHtml(page.description)}</p>${articles}</main></div></div>`);
+    html = html.replace('<div id="root"></div>', `<div id="root"><div class="container"><nav aria-label="주요 메뉴">${links}</nav><main>${breadcrumbs}<h1>${escapeHtml(page.name)}</h1><p>${escapeHtml(page.description)}</p>${directory}${articles}</main></div></div>`);
   }
   html = replaceMeta(html, 'og:url', canonical, true);
   html = html.replace('</head>', `<link rel="canonical" href="${escapeHtml(canonical)}"></head>`);

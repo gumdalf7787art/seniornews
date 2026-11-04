@@ -1,3 +1,4 @@
+import { pageMetadata } from '../../shared/seo.js';
 import { Link } from 'react-router-dom';
 
 export default function CategoryNewsBlock({ category, articles }) {
@@ -9,9 +10,10 @@ export default function CategoryNewsBlock({ category, articles }) {
     <section className="category-block" aria-labelledby={`category-${category.slug}`}>
       <div className="section-heading">
         <h2 id={`category-${category.slug}`}>{category.name}</h2>
-        <Link to={`/category/${category.slug}`}>더보기</Link>
+        <Link to={`/category/${category.slug}`}>{category.name} 기사 더보기</Link>
       </div>
 
+      <p className="news-intro">{pageMetadata(`/category/${category.slug}`)?.description}</p>
       <article className="category-featured">
         <Link className="category-featured-image" to={`/article/${featured.slug}`}>
           {featured.image ? <img src={featured.image} alt={featured.imageAlt} loading="lazy" decoding="async" sizes="(max-width: 767px) 100vw, 180px" /> : <span className="article-image-placeholder" aria-hidden="true" />}

@@ -1441,3 +1441,5 @@ main { flex: 1; }
   .article-body figure { margin: 1.6em -16px 2em; }
   .article-body figure figcaption { padding-inline: 16px; }
 }
+
+.news-intro { color: var(--ink-subtle); font-size: 1rem; line-height: 1.75; margin: 1.25rem 0; max-width: 76ch; word-break: keep-all; }

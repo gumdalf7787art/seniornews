@@ -1,3 +1,4 @@
+import { publicPages } from '../../shared/seo.js';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, LoaderCircle } from 'lucide-react';
@@ -49,6 +50,7 @@ export default function HomePage() {
 
   return (
     <div className="container">
+      <p className="news-intro">{publicPages[0].description}</p>
       <section aria-labelledby="today-heading">
         <div className="section-heading"><h2 id="today-heading">오늘의 주요 뉴스</h2><span className="eyebrow">{lead.publishedAt?.slice(0, 10)}</span></div>
         <div className="lead-grid">
