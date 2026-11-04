@@ -49,3 +49,15 @@ test('non-HTML responses pass through unchanged', async () => {
   const response = new Response('asset', { headers: { 'Content-Type': 'text/css' } });
   assert.equal(await onRequest({ ...context('/assets/style.css'), next: async () => response }), response);
 });
+test('first response carries home cards and article data without executable markup or private editorial notes', async () => {
+  const tricky = { ...article, title: '표기 </script> $&', body_json: JSON.stringify({ content: [{ type: 'paragraph', text: '원문' }], editorial: { internal_review: 'PRIVATE_MARKER', hero_caption: '공개 설명' } }) };
+  const db = { prepare: () => ({ bind: () => ({ first: async () => tricky, all: async () => ({ results: [{slug: tricky.slug, title: tricky.title}] }) }) }) };
+  for (const path of ['/', '/article/sample-news']) {
+    const body = await (await onRequest({ ...context(path), env: { DB: db } })).text();
+    const seed = JSON.parse(body.match(/<script id="news-initial" type="application\/json">(.*?)<\/script>/s)[1]);
+    assert.equal(seed.path, path);
+    assert.equal((seed.article || seed.articles[0]).title, tricky.title);
+    assert.ok(!body.includes('PRIVATE_MARKER'));
+    if (seed.article) assert.equal(JSON.parse(seed.article.body_json).content[0].text, '원문');
+  }
+});

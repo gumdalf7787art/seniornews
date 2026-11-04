@@ -7,36 +7,23 @@ import CategoryNewsBlock from '../components/CategoryNewsBlock';
 import HeroAdBanner from '../components/HeroAdBanner';
 import SeniorBriefingBar from '../components/SeniorBriefingBar';
 import { categories, categoryName } from '../data/articles';
-import { fetchPublishedArticles } from '../utils/publicArticles';
+import { fetchPublishedArticles, recentHomeList } from '../utils/publicArticles';
 
 export default function HomePage() {
-  const [articles, setArticles] = useState([]);
+  const [articles, setArticles] = useState(() => recentHomeList() || []);
   const [banners, setBanners] = useState([]);
   const [briefings, setBriefings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !recentHomeList());
   const [error, setError] = useState('');
 
   useEffect(() => {
-    Promise.all([
-      fetchPublishedArticles({ limit: 30 }),
-      fetch('/api/banners').then(async (response) => {
-        if (!response.ok) throw new Error('광고 배너를 불러오지 못했습니다.');
-        const data = await response.json();
-        return data.banners || [];
-      }).catch(() => []),
-      fetch('/api/briefings').then(async (response) => {
-        if (!response.ok) throw new Error('오늘의 알림을 불러오지 못했습니다.');
-        const data = await response.json();
-        return data.briefings || [];
-      }).catch(() => []),
-    ])
-      .then(([publishedArticles, activeBanners, activeBriefings]) => {
-        setArticles(publishedArticles);
-        setBanners(activeBanners);
-        setBriefings(activeBriefings);
-      })
-      .catch((requestError) => setError(requestError.message || '기사를 불러오지 못했습니다.'))
-      .finally(() => setLoading(false));
+    let active = true;
+    fetchPublishedArticles({ limit: 30 }).then(items => { if (active) setArticles(items); })
+      .catch(error => { if (active) setError(error.message); }).finally(() => { if (active) setLoading(false); });
+    for (const [key, update] of [['banners', setBanners], ['briefings', setBriefings]]) {
+      fetch(`/api/${key}`).then(r => r.ok ? r.json() : {}).then(data => { if (active) update(data[key] || []); }).catch(() => {});
+    }
+    return () => { active = false; };
   }, []);
 
   const lead = articles.find((article) => article.is_featured) || articles[0];

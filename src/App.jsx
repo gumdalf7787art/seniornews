@@ -1,3 +1,5 @@
+import ArticlePage from './pages/ArticlePage';
+import HomePage from './pages/HomePage';
 import { Component, lazy, Suspense, useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import NewsLayout from './components/NewsLayout';
@@ -43,9 +45,9 @@ function lazyWithDeploymentRecovery(factory, pageName) {
   });
 }
 
-const HomePage = lazyWithDeploymentRecovery(() => import('./pages/HomePage'), 'home');
+
 const CategoryPage = lazyWithDeploymentRecovery(() => import('./pages/CategoryPage'), 'category');
-const ArticlePage = lazyWithDeploymentRecovery(() => import('./pages/ArticlePage'), 'article');
+
 const SearchPage = lazyWithDeploymentRecovery(() => import('./pages/SearchPage'), 'search');
 const MyPage = lazyWithDeploymentRecovery(() => import('./pages/MyPage'), 'mypage');
 const AdminPage = lazyWithDeploymentRecovery(() => import('./pages/AdminPage'), 'admin');

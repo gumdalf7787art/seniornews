@@ -28,7 +28,26 @@ export function normalizeArticle(article) {
   };
 }
 
+const initial = (() => {
+  try { return JSON.parse(document.getElementById('news-initial')?.textContent || 'null'); } catch { return null; }
+})();
+export function initialArticle(slug) {
+  return initial?.article?.slug === slug && initial.path === window.location.pathname ? normalizeArticle(initial.article) : null;
+}
+export function releaseInitialArticle() { if (initial) delete initial.article; }
+const summaries = new Map();
+function remember(items) {
+  for (const item of items) summaries.set(item.slug, item);
+  while (summaries.size > 180) summaries.delete(summaries.keys().next().value);
+  return items;
+}
+export const articlePreview = slug => summaries.get(slug);
+let homeList = initial?.path === '/' && Array.isArray(initial.articles) ? remember(initial.articles.map(normalizeArticle)) : null;
+let fetchedAt = Date.now();
+export const recentHomeList = () => Date.now() - fetchedAt < 60000 ? homeList : null;
 export async function fetchPublishedArticles(params = {}) {
+  const isHome = params.limit === 30 && Object.keys(params).length === 1;
+  if (isHome && recentHomeList()) return homeList;
   const search = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== '') search.set(key, String(value));
@@ -36,5 +55,7 @@ export async function fetchPublishedArticles(params = {}) {
   const response = await fetch(`/api/articles${search.size ? `?${search}` : ''}`);
   const data = await response.json();
   if (!response.ok) throw new Error(data.message || '기사를 불러오지 못했습니다.');
-  return (data.articles || []).map(normalizeArticle);
+  const items = remember((data.articles || []).map(normalizeArticle));
+  if (isHome) { homeList = items; fetchedAt = Date.now(); }
+  return items;
 }

@@ -4,7 +4,7 @@ import { Bookmark, Share2, Volume2, Square } from 'lucide-react';
 import ArticleCard from '../components/ArticleCard';
 import NewsSidebar from '../components/NewsSidebar';
 import { categoryName } from '../data/articles';
-import { fetchPublishedArticles, normalizeArticle } from '../utils/publicArticles';
+import { fetchPublishedArticles, normalizeArticle, initialArticle, releaseInitialArticle, articlePreview } from '../utils/publicArticles';
 import { saveRecentArticle } from '../utils/readerPreferences';
 import { SITE_ORIGIN } from '../../shared/seo.js';
 
@@ -34,36 +34,44 @@ function BodyBlock({ block }) {
 
 export default function ArticlePage({ user }) {
   const { slug } = useParams();
-  const [article, setArticle] = useState(null);
+  return <ArticleReader key={slug} slug={slug} user={user} />;
+}
+
+function ArticleReader({ slug, user }) {
+  const [seed] = useState(() => initialArticle(slug));
+  const [article, setArticle] = useState(seed);
   const [related, setRelated] = useState([]);
   const [sidebarArticles, setSidebarArticles] = useState([]);
   const [banners, setBanners] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!seed);
   const [bookmarked, setBookmarked] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [readingProgress, setReadingProgress] = useState(0);
   const speechSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
 
   useEffect(() => {
-    setLoading(true);
-    fetch(`/api/articles/${encodeURIComponent(slug)}`).then(async (response) => {
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message);
-      return normalizeArticle(data.article);
-    }).then((loaded) => {
-      setArticle(loaded); saveRecentArticle(loaded); document.title = `${loaded.editorial?.seo_title || loaded.title} | 시니어 라이프 뉴스`;
-      return Promise.all([
-        fetchPublishedArticles({ category: loaded.category, limit: 4 }),
-        fetchPublishedArticles({ limit: 30 }),
-        fetch('/api/banners').then(async (response) => {
-          if (!response.ok) throw new Error('광고 배너를 불러오지 못했습니다.');
-          const data = await response.json();
-          return data.banners || [];
-        }).catch(() => []),
-      ]);
-    }).then(([items, allItems, activeBanners]) => { setRelated(items.filter((item) => item.slug !== slug).slice(0, 3)); setSidebarArticles(allItems); setBanners(activeBanners); }).catch(() => setArticle(null)).finally(() => setLoading(false));
-
-  }, [slug]);
+    let active = true;
+    const controller = new AbortController();
+    const signal = controller.signal;
+    if (seed) releaseInitialArticle();
+    const detail = seed ? Promise.resolve(seed) : fetch(`/api/articles/${encodeURIComponent(slug)}`, { signal }).then(async r => {
+      if (!r.ok) throw new Error('기사를 가져올 수 없습니다.');
+      return normalizeArticle((await r.json()).article);
+    });
+    detail.then(loaded => {
+      if (!active) return;
+      setArticle(loaded);
+      setLoading(false);
+      saveRecentArticle(loaded);
+      document.title = `${loaded.editorial?.seo_title || loaded.title} | 시니어 라이프 뉴스`;
+      fetchPublishedArticles({ category: loaded.category, limit: 4 }).then(items => {
+        if (active) setRelated(items.filter(item => item.slug !== slug).slice(0, 3));
+      }).catch(() => {});
+    }).catch(() => { if (active) { setArticle(null); setLoading(false); } });
+    fetchPublishedArticles({ limit: 30 }).then(items => { if (active) setSidebarArticles(items); }).catch(() => {});
+    fetch('/api/banners', { signal }).then(r => r.ok ? r.json() : {}).then(data => { if (active) setBanners(data.banners || []); }).catch(() => {});
+    return () => { active = false; controller.abort(); };
+  }, [slug, seed]);
 
   useEffect(() => () => { window.speechSynthesis?.cancel(); }, []);
   useEffect(() => {
@@ -101,7 +109,12 @@ export default function ArticlePage({ user }) {
     };
   }, [article]);
   const speechText = useMemo(() => article ? `${article.title}. ${article.summary}. ${article.body.map((block) => block.text || block.caption || '').join(' ')}` : '', [article]);
-  if (loading) return <div className="empty-state"><p>기사를 불러오는 중입니다.</p></div>;
+  if (loading) {
+    const preview = articlePreview(slug);
+    return <div className="article-shell" aria-busy="true"><article className="article-wrap"><header className="article-header">
+      {preview ? <><span className="eyebrow">{categoryName(preview.category)}</span><h1>{preview.title}</h1><p className="article-deck">{preview.summary}</p><div className="meta"><strong>{preview.author}</strong><time>입력 {preview.publishedAt}</time></div></> : <p role="status">기사를 불러오는 중입니다.</p>}
+    </header></article></div>;
+  }
   if (!article) return <div className="empty-state"><h1>기사를 찾을 수 없습니다.</h1><Link className="primary-button" to="/">홈으로 돌아가기</Link></div>;
 
   // Place the lead image at a section boundary near the middle, without repeating inline images.
