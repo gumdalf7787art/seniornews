@@ -116,3 +116,64 @@ test('published revisions preserve metadata; permanent deletion requires separat
   assert.equal((await s.call(path,'DELETE',del)).status,200);assert.equal((await s.call(path)).status,404);
  }finally{s.sql.close();}
 });
+
+
+test('published image lifecycle keeps text, attribution and publication; originals remain reusable',async()=>{
+ const s=await setup();try{
+  await s.active();const created=await s.call('articles','POST',s.payload);const path='articles/'+created.body.id;
+  s.sql.prepare("UPDATE articles SET status='published',published_at='2026-01-01 01:02:03' WHERE id=?").run(created.body.id);
+  const before=(await s.call(path)).body.article;
+  const form=new FormData();form.set('alt','AI image');form.set('file',new File([new Uint8Array([137,80,78,71,13,10,26,10,1])],'x.png',{type:'image/png'}));
+  const uploaded=await s.call('media','POST',null,'token',form);assert.equal(uploaded.status,200);
+  const im={url:uploaded.body.url,alt:'AI 연구 이미지',caption:'AI 생성 이미지',kind:'ai'};
+  const read=()=>s.call(path);const patch=async(data)=>s.call(path+'/images','PATCH',{expected_hash:(await read()).body.content_hash,...data});
+  assert.equal((await patch({hero:im})).status,200);
+  assert.equal((await patch({operations:[{action:'insert',index:1,image:im}]})).status,200);
+  let current=(await read()).body;
+  assert.equal(JSON.parse(current.article.body_json).content[1].attrs.src,im.url);
+  assert.equal((await patch({operations:[{action:'replace',index:1,image:{...im,alt:'AI 수정 설명',caption:'수정 AI 생성 이미지'}}]})).status,200);
+  assert.equal((await s.call(path+'/images','PATCH',{expected_hash:current.content_hash,hero:null})).status,409);
+  current=(await read()).body;assert.equal(JSON.parse(current.article.body_json).content[1].attrs.alt,'AI 수정 설명');
+  assert.equal((await patch({hero:null,operations:[{action:'remove',index:1}]})).status,200);
+  const after=(await read()).body.article;
+  for(const k of ['title','slug','summary','body_text','source_text','category_id','author_id','status','published_at','scheduled_at'])assert.equal(after[k],before[k]);
+  assert.deepEqual(JSON.parse(after.body_json),JSON.parse(before.body_json));assert.equal(after.image_url,null);assert.equal(after.image_alt,null);
+  assert.equal(s.objects.size,1);assert.equal(s.sql.prepare('SELECT COUNT(*) n FROM media').get().n,1);
+  assert.equal(s.sql.prepare("SELECT COUNT(*) n FROM audit_logs WHERE action='api_edit_images'").get().n,4);
+ }finally{s.sql.close();}
+});
+
+test('image changes reject foreign media, invalid labels, text removal and extra article fields atomically',async()=>{
+ const s=await setup();try{
+  await s.active();const c=await s.call('articles','POST',s.payload);const path='articles/'+c.body.id;
+  const before=(await s.call(path)).body;
+  const im={url:'https://media.example.org/foreign.png',alt:'AI photo',caption:'AI 생성 이미지',kind:'ai'};
+  const patch=data=>s.call(path+'/images','PATCH',{expected_hash:before.content_hash,...data});
+  assert.equal((await patch({hero:im})).status,403);
+  assert.equal((await patch({hero:{...im,url:'javascript:alert(1)'}})).status,400);
+  assert.equal((await patch({hero:{...im,caption:'실제 사진'}})).status,400);
+  assert.equal((await patch({hero:{...im,kind:'photo'}})).status,400);
+  assert.equal((await patch({hero:null,title:'changed'})).status,400);
+  assert.equal((await patch({operations:[{action:'remove',index:0}]})).status,400);
+  assert.equal((await patch({operations:[{action:'insert',index:99,image:im}]})).status,400);
+  assert.equal((await patch({operations:[{action:'insert',index:0,image:im},{action:'remove',index:1}]})).status,400);
+  assert.equal((await patch({operations:'bad'})).status,400);
+  assert.deepEqual((await s.call(path)).body,before);
+  s.sql.prepare("INSERT INTO users(id,email,name,role,status) VALUES(2,'other@example.org','Other','admin','active')").run();
+  s.sql.prepare('UPDATE articles SET author_id=2 WHERE id=?').run(c.body.id);
+  assert.equal((await patch({hero:null})).status,404);
+ }finally{s.sql.close();}
+});
+
+test('image CAS rejects concurrent changes and preserves future schedule',async()=>{
+ const s=await setup();try{
+  await s.active();const c=await s.call('articles','POST',s.payload);const path='articles/'+c.body.id;
+  s.sql.prepare("UPDATE articles SET status='published',scheduled_at='2099-01-01',published_at='2099-01-01' WHERE id=?").run(c.body.id);
+  let before=(await s.call(path)).body;
+  assert.equal((await s.call(path+'/images','PATCH',{expected_hash:before.content_hash,hero:null})).status,200);
+  let after=(await s.call(path)).body;assert.equal(after.article.published_at,'2099-01-01');assert.equal(after.article.scheduled_at,'2099-01-01');
+  const original=s.env.DB.prepare;
+  s.env.DB.prepare=function(query){if(query.startsWith('UPDATE articles SET body_json=?,image_url='))s.sql.prepare("UPDATE articles SET image_alt='concurrent change' WHERE id=?").run(c.body.id);return original(query);};
+  assert.equal((await s.call(path+'/images','PATCH',{expected_hash:after.content_hash,hero:null})).status,409);
+ }finally{s.sql.close();}
+});

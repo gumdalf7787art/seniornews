@@ -1,3 +1,4 @@
+import { editArticleImages } from '../../../shared/article-images.js';
 import { json, requireUser, verifyMutationRequest, audit, AUTOMATION_USER } from '../utils/auth.js';
 import { onRequestPost as createArticle } from '../admin/articles/index.js';
 import { onRequestPatch as updateArticle } from '../admin/articles/[id]/index.js';
@@ -124,6 +125,17 @@ export async function onRequest(context) {
     }
     const a=await owned(context,key,path[1]);if(!a)return failure('기사 없음',404);
     if(d.expected_hash!==await articleHash(a))return failure('원고가 변경되었습니다. 다시 검토하세요',409);
+    if (method === 'PATCH' && path.length === 3 && path[2] === 'images') {
+      let change;
+      try { change = editArticleImages(a,d); } catch (error) { return failure(error.message,400); }
+      for (const url of change.urls) {
+        if (!await context.env.DB.prepare('SELECT id FROM media WHERE url=? AND uploader_id=?').bind(url,key.approved_by).first()) return failure('이 연결 계정이 업로드한 이미지만 사용할 수 있습니다',403);
+      }
+      const result = await context.env.DB.prepare("UPDATE articles SET body_json=?,image_url=?,image_alt=?,updated_at=strftime('%Y-%m-%d %H:%M:%f','now') WHERE id=? AND author_id=? AND updated_at=? AND body_json=? AND status=? AND image_url IS ? AND image_alt IS ?").bind(change.body_json,change.image_url,change.image_alt,a.id,user.id,a.updated_at,a.body_json,a.status,a.image_url,a.image_alt).run();
+      if (result.meta.changes !== 1) return failure('동시 변경 감지',409);
+      await audit(context.env,user.id,'api_edit_images','article',a.id,{key_id:key.id,previous_hash:d.expected_hash,hero_changed:Object.hasOwn(d,'hero'),operations:(d.operations||[]).map(op=>({action:op.action,index:op.index}))});
+      return json({success:true,id:a.id,status:a.status});
+    }
     if (method === 'DELETE' && path.length === 2) {
       if (!key.scopes.split(' ').includes('articles:delete')) return failure('관리자 화면에서 이 연결의 삭제 권한을 활성화하세요',403);
       if (d.confirm_slug !== a.slug) return failure('삭제할 기사 주소가 일치하지 않습니다',400);
